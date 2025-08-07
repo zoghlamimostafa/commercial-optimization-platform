@@ -1,6 +1,6 @@
 # 🚀 Commercial Optimization Platform
 
-> **Système d'Optimisation Commerciale et Livraison** - Une plateforme intelligente pour l'optimisation des performances commerciales et logistiques avec analyse prédictive avancée.
+> **Commercial & Delivery Optimization System** - An intelligent platform for optimizing commercial performance and logistics with advanced predictive analytics.
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
@@ -8,310 +8,310 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange.svg)](https://mysql.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 📋 Vue d'Ensemble
+## 📋 Overview
 
-Cette application web Flask offre une solution complète pour l'optimisation commerciale et logistique, combinant:
+This Flask web application provides a comprehensive solution for commercial and logistics optimization, combining:
 
-- **🎯 Gestion Commerciale Avancée** - Suivi performances, analyse clients, gestion produits
-- **🗺️ Optimisation des Livraisons** - Algorithmes d'optimisation de routes intelligents
-- **📈 Analyse Prédictive** - Modèles SARIMA et Prophet pour prévisions précises
-- **📊 Tableaux de Bord Interactifs** - KPIs temps réel avec visualisations modernes
-- **💼 Système d'Export Complet** - Excel, CSV, JSON avec formatage professionnel
+- **🎯 Advanced Commercial Management** - Performance tracking, client analysis, product management
+- **🗺️ Delivery Optimization** - Intelligent route optimization algorithms
+- **📈 Predictive Analytics** - SARIMA and Prophet models for accurate forecasting
+- **📊 Interactive Dashboards** - Real-time KPIs with modern visualizations
+- **💼 Complete Export System** - Excel, CSV, JSON with professional formatting
 
-## ✨ Fonctionnalités Principales
+## ✨ Key Features
 
-### 🏪 **Gestion Commerciale**
-- Dashboard avec KPIs temps réel
-- Gestion complète des clients et commerciaux
-- Analyse des performances par produit
-- Suivi du chiffre d'affaires et tendances
+### 🏪 **Commercial Management**
+- Dashboard with real-time KPIs
+- Complete client and sales rep management
+- Product performance analysis
+- Revenue tracking and trends
 
-### 🚛 **Optimisation Logistique**
-- Algorithmes d'optimisation de routes (TSP/VRP)
-- Planification intelligente des tournées
-- Cartes interactives avec Leaflet
-- Contraintes métier personnalisables
+### 🚛 **Logistics Optimization**
+- Route optimization algorithms (TSP/VRP)
+- Intelligent tour planning
+- Interactive maps with Leaflet
+- Customizable business constraints
 
-### 🔮 **Intelligence Artificielle**
-- **Prédictions SARIMA**: Visites commerciales futures
-- **Modèle Prophet**: Prévisions de ventes produits
-- **Machine Learning**: Classification et optimisation
-- Intervalles de confiance et métriques de qualité
+### 🔮 **Artificial Intelligence**
+- **SARIMA Predictions**: Future commercial visits
+- **Prophet Model**: Product sales forecasting
+- **Machine Learning**: Classification and optimization
+- Confidence intervals and quality metrics
 
 ### 📈 **Analytics & Reporting**
-- Tableaux de bord interactifs
-- Graphiques avec Chart.js
-- Exports Excel multi-feuilles professionnels
-- Raccourcis clavier pour productivité
+- Interactive dashboards
+- Charts with Chart.js
+- Professional multi-sheet Excel exports
+- Keyboard shortcuts for productivity
 
-## 🎬 Aperçu Rapide
+## 🎬 Quick Preview
 
-### Dashboard Principal
-![Dashboard](https://via.placeholder.com/800x400/1e40af/ffffff?text=Dashboard+Principal+avec+KPIs)
+### Main Dashboard
+![Dashboard](https://via.placeholder.com/800x400/1e40af/ffffff?text=Main+Dashboard+with+Real-time+KPIs)
 
-### Optimisation des Routes
-![Routes](https://via.placeholder.com/800x400/059669/ffffff?text=Optimisation+Intelligente+des+Routes)
+### Route Optimization
+![Routes](https://via.placeholder.com/800x400/059669/ffffff?text=Intelligent+Route+Optimization)
 
-### Analytics Prédictifs
-![Analytics](https://via.placeholder.com/800x400/dc2626/ffffff?text=Analyses+Prédictives+Avancées)
+### Predictive Analytics
+![Analytics](https://via.placeholder.com/800x400/dc2626/ffffff?text=Advanced+Predictive+Analytics)
 
-## 🛠️ Installation & Configuration
+## 🛠️ Installation & Setup
 
-### Prérequis
+### Prerequisites
 - Python 3.8+
 - MySQL 8.0+
-- Node.js (optionnel, pour développement frontend)
+- Node.js (optional, for frontend development)
 
-### Installation Rapide
+### Quick Installation
 
-1. **Cloner le repository**
+1. **Clone the repository**
 ```bash
 git clone https://github.com/zoghlamimostafa/commercial-optimization-platform.git
 cd commercial-optimization-platform
 ```
 
-2. **Créer environnement virtuel**
+2. **Create virtual environment**
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# ou
+# or
 venv\Scripts\activate     # Windows
 ```
 
-3. **Installer les dépendances**
+3. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Configuration Base de Données**
+4. **Database Setup**
 ```bash
-# Créer la base de données MySQL 'pfe1'
+# Create MySQL database 'pfe1'
 mysql -u root -p -e "CREATE DATABASE pfe1;"
 
-# Importer le schéma (fichier SQL non inclus pour des raisons de taille)
-# Contactez l'administrateur pour obtenir le fichier de base de données
+# Import schema (SQL file not included due to size)
+# Contact administrator for database file
 ```
 
-5. **Lancer l'application**
+5. **Run the application**
 ```bash
 python app.py
 ```
 
-6. **Accéder à l'application**
+6. **Access the application**
 ```
 http://localhost:5000
 ```
 
-## 🏗️ Architecture Technique
+## 🏗️ Technical Architecture
 
 ### Backend
 ```
-app.py (2645+ lignes)
-├── 🔐 Routes d'authentification
-├── 📊 Endpoints de gestion des données
-├── 🤖 API d'analyse prédictive
-├── ⚡ Services d'optimisation
-├── 📤 Système d'export complet
-└── 🛡️ Gestion des erreurs et logging
+app.py (2645+ lines)
+├── 🔐 Authentication routes
+├── 📊 Data management endpoints
+├── 🤖 Predictive analytics API
+├── ⚡ Optimization services
+├── 📤 Complete export system
+└── 🛡️ Error handling and logging
 ```
 
-### Modules Spécialisés
-- `product_analysis.py` - Analyse produits avec Prophet
-- `commercial_visits_analysis.py` - Prédictions SARIMA
-- `delivery_optimization.py` - Optimisation de routes
-- `export_utilities.py` - Système d'export centralisé
-- `data_preprocessing.py` - Nettoyage de données
+### Specialized Modules
+- `product_analysis.py` - Product analysis with Prophet
+- `commercial_visits_analysis.py` - SARIMA predictions
+- `delivery_optimization.py` - Route optimization
+- `export_utilities.py` - Centralized export system
+- `data_preprocessing.py` - Data cleaning
 
 ### Frontend
-- **Templates**: Jinja2 avec Bootstrap 5
-- **Cartes**: Leaflet pour géolocalisation
-- **Graphiques**: Chart.js pour visualisations
-- **UI/UX**: Interface responsive moderne
+- **Templates**: Jinja2 with Bootstrap 5
+- **Maps**: Leaflet for geolocation
+- **Charts**: Chart.js for visualizations
+- **UI/UX**: Modern responsive interface
 - **Notifications**: SweetAlert2
 
-## 📊 Stack Technologique
+## 📊 Technology Stack
 
 ### Backend Python
 ```python
-Flask                   # Framework web
-pandas                  # Manipulation de données
-numpy                   # Calculs numériques
+Flask                   # Web framework
+pandas                  # Data manipulation
+numpy                   # Numerical calculations
 scikit-learn           # Machine learning
-prophet                 # Prévisions temporelles
-statsmodels            # Modèles SARIMA
-mysql-connector-python # Connecteur MySQL
-openpyxl               # Export Excel
-matplotlib/seaborn     # Visualisations
+prophet                 # Time series forecasting
+statsmodels            # SARIMA models
+mysql-connector-python # MySQL connector
+openpyxl               # Excel export
+matplotlib/seaborn     # Visualizations
 ```
 
 ### Frontend JavaScript
 ```javascript
-Bootstrap 5.3.0        # Framework CSS
-jQuery 3.6.0           # Manipulation DOM
-Chart.js               # Graphiques interactifs
-Leaflet               # Cartes interactives
-SweetAlert2           # Notifications élégantes
-Font Awesome 6        # Icônes modernes
-DataTables            # Tables avancées
+Bootstrap 5.3.0        # CSS framework
+jQuery 3.6.0           # DOM manipulation
+Chart.js               # Interactive charts
+Leaflet               # Interactive maps
+SweetAlert2           # Elegant notifications
+Font Awesome 6        # Modern icons
+DataTables            # Advanced tables
 ```
 
-## 🚀 Utilisation
+## 🚀 Usage
 
-### Connexion
-1. Accédez à `http://localhost:5000`
-2. Connectez-vous avec vos identifiants
-3. Explorez le dashboard principal
+### Login
+1. Access `http://localhost:5000`
+2. Login with your credentials
+3. Explore the main dashboard
 
-### Fonctionnalités Clés
+### Key Features
 
-#### 📊 **Dashboard Principal**
-- KPIs temps réel (clients, commerciaux, produits)
-- Actions rapides d'accès aux modules
-- Panel d'export avec raccourcis clavier
+#### 📊 **Main Dashboard**
+- Real-time KPIs (clients, sales reps, products)
+- Quick access actions to modules
+- Export panel with keyboard shortcuts
 
-#### 👥 **Gestion Clients**
-- Liste complète avec recherche
-- Analyses individuelles détaillées
-- Exports Excel/CSV personnalisés
+#### 👥 **Client Management**
+- Complete list with search
+- Detailed individual analysis
+- Custom Excel/CSV exports
 
-#### 🎯 **Optimisation Livraisons**
-- Sélection commercial et date
-- Algorithmes d'optimisation avancés
-- Visualisation carte interactive
-- Métriques de performance
+#### 🎯 **Delivery Optimization**
+- Sales rep and date selection
+- Advanced optimization algorithms
+- Interactive map visualization
+- Performance metrics
 
-#### 📈 **Analytics Prédictifs**
-- Prévisions de visites (SARIMA)
-- Prévisions de ventes (Prophet)
-- Intervalles de confiance
-- Comparaisons multi-commerciaux
+#### 📈 **Predictive Analytics**
+- Visit predictions (SARIMA)
+- Sales forecasting (Prophet)
+- Confidence intervals
+- Multi-sales rep comparisons
 
-## 📤 Système d'Export
+## 📤 Export System
 
-### Types d'Export Disponibles
-- **📗 Excel**: Multi-feuilles avec formatage professionnel
-- **📄 CSV**: Format léger pour analyses externes
-- **🔗 JSON**: Données structurées pour intégrations API
+### Available Export Types
+- **📗 Excel**: Multi-sheet with professional formatting
+- **📄 CSV**: Lightweight format for external analysis
+- **🔗 JSON**: Structured data for API integrations
 
-### Raccourcis Clavier
+### Keyboard Shortcuts
 - `Ctrl+Shift+C` - Export Clients
-- `Ctrl+Shift+V` - Export Commerciaux
-- `Ctrl+Shift+P` - Export Produits
+- `Ctrl+Shift+V` - Export Sales Reps
+- `Ctrl+Shift+P` - Export Products
 - `Ctrl+Shift+D` - Export Dashboard
-- `Ctrl+Shift+A` - Export Complet
+- `Ctrl+Shift+A` - Complete Export
 
-## 🔒 Sécurité
+## 🔒 Security
 
-- **Authentification**: Login obligatoire avec sessions sécurisées
-- **Protection**: CSRF, injection SQL, validation entrées
-- **Contrôle d'accès**: Décorateur `@login_required`
-- **Audit**: Logs détaillés des actions utilisateur
+- **Authentication**: Required login with secure sessions
+- **Protection**: CSRF, SQL injection, input validation
+- **Access Control**: `@login_required` decorator
+- **Audit**: Detailed user action logs
 
-## 🎯 Cas d'Usage
+## 🎯 Use Cases
 
-### Pour les Commerciaux
-1. Consulter performance quotidienne
-2. Planifier tournées optimisées
-3. Analyser clients prioritaires
-4. Exporter rapports professionnels
+### For Sales Representatives
+1. View daily performance
+2. Plan optimized routes
+3. Analyze priority clients
+4. Export professional reports
 
-### Pour les Managers
-1. Dashboard KPIs globaux
-2. Analyses comparatives équipes
-3. Prévisions business intelligence
-4. Reporting automatisé
+### For Managers
+1. Global KPI dashboard
+2. Comparative team analysis
+3. Business intelligence forecasts
+4. Automated reporting
 
-### Pour la Logistique
-1. Optimisation routes de livraison
-2. Planification ressources
-3. Suivi métriques efficacité
-4. Analyses coûts transport
+### For Logistics
+1. Delivery route optimization
+2. Resource planning
+3. Efficiency metrics tracking
+4. Transport cost analysis
 
-## 📈 Métriques & KPIs
+## 📈 Metrics & KPIs
 
-### Indicateurs Commerciaux
-- CA par commercial/client/produit
-- Fréquence et nombre de visites
-- Évolution panier moyen
-- Parts de marché territoriales
+### Commercial Indicators
+- Revenue per sales rep/client/product
+- Visit frequency and number
+- Average basket evolution
+- Territorial market share
 
-### Indicateurs Logistiques
-- Distance totale optimisée
-- Nombre d'arrêts par tournée
-- Temps de livraison moyen
-- Taux d'optimisation (% gain)
+### Logistics Indicators
+- Total optimized distance
+- Number of stops per route
+- Average delivery time
+- Optimization rate (% gain)
 
-### Indicateurs Prédictifs
-- Précision des prévisions (MAPE)
-- Intervalles de confiance
-- Tendances saisonnières
-- Cycles de vente identifiés
+### Predictive Indicators
+- Forecast accuracy (MAPE)
+- Confidence intervals
+- Seasonal trends
+- Identified sales cycles
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-Les contributions sont les bienvenues! Voici comment participer:
+Contributions are welcome! Here's how to participate:
 
-1. **Fork** le projet
-2. **Créer** une branche feature (`git checkout -b feature/AmazingFeature`)
-3. **Commiter** vos changements (`git commit -m 'Add AmazingFeature'`)
-4. **Push** vers la branche (`git push origin feature/AmazingFeature`)
-5. **Ouvrir** une Pull Request
+1. **Fork** the project
+2. **Create** a feature branch (`git checkout -b feature/AmazingFeature`)
+3. **Commit** your changes (`git commit -m 'Add AmazingFeature'`)
+4. **Push** to the branch (`git push origin feature/AmazingFeature`)
+5. **Open** a Pull Request
 
-### Standards de Code
-- Suivre PEP 8 pour Python
-- Commenter le code complexe
-- Tests unitaires pour nouvelles fonctionnalités
-- Documentation mise à jour
+### Code Standards
+- Follow PEP 8 for Python
+- Comment complex code
+- Unit tests for new features
+- Updated documentation
 
 ## 📞 Support
 
 ### Documentation
-- **📖 Documentation Complète**: `APPLICATION_RESUME_COMPLET.md`
-- **🔧 Guide d'installation**: Section Installation ci-dessus
-- **💡 Exemples d'usage**: Section Utilisation
+- **📖 Complete Documentation**: `APPLICATION_RESUME_COMPLET.md`
+- **🔧 Installation Guide**: Installation section above
+- **💡 Usage Examples**: Usage section
 
 ### Contact
-- **GitHub Issues**: Pour bugs et demandes de fonctionnalités
+- **GitHub Issues**: For bugs and feature requests
 - **Email**: [contact@example.com](mailto:contact@example.com)
-- **Documentation**: Consultez les fichiers README des modules
+- **Documentation**: Check module README files
 
-## 📜 Licence
+## 📜 License
 
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## 🙏 Remerciements
+## 🙏 Acknowledgments
 
-- **Flask Team** pour le framework web excellent
-- **Bootstrap** pour l'interface utilisateur moderne
-- **Chart.js** pour les visualisations interactives
-- **Leaflet** pour les cartes géographiques
-- **Prophet & SARIMA** pour les modèles prédictifs
-
----
-
-## 🌟 Fonctionnalités Avancées
-
-### Intelligence Artificielle
-- **Prédictions Temporelles**: Modèles SARIMA pour visites commerciales
-- **Prévisions de Ventes**: Prophet avec saisonnalité
-- **Optimisation Routes**: Algorithmes génétiques et heuristiques
-- **Classification ML**: Segmentation clients automatique
-
-### Performance & Scalabilité
-- **Cache Intelligent**: Gestion optimisée des requêtes
-- **Traitement Asynchrone**: Exports volumineux non-bloquants
-- **Index Optimisés**: Base de données haute performance
-- **Responsive Design**: Compatible tous appareils
-
-### Intégrations Futures
-- **API REST**: Endpoints complets pour intégrations
-- **Webhooks**: Notifications temps réel
-- **Mobile App**: Application native iOS/Android
-- **ERP Integration**: Connecteurs SAP, Oracle, etc.
+- **Flask Team** for the excellent web framework
+- **Bootstrap** for the modern user interface
+- **Chart.js** for interactive visualizations
+- **Leaflet** for geographic maps
+- **Prophet & SARIMA** for predictive models
 
 ---
 
-**Développé avec ❤️ pour optimiser les performances commerciales et logistiques**
+## 🌟 Advanced Features
+
+### Artificial Intelligence
+- **Time Series Predictions**: SARIMA models for commercial visits
+- **Sales Forecasting**: Prophet with seasonality
+- **Route Optimization**: Genetic algorithms and heuristics
+- **ML Classification**: Automatic client segmentation
+
+### Performance & Scalability
+- **Smart Cache**: Optimized query management
+- **Asynchronous Processing**: Non-blocking large exports
+- **Optimized Indexes**: High-performance database
+- **Responsive Design**: Compatible with all devices
+
+### Future Integrations
+- **REST API**: Complete endpoints for integrations
+- **Webhooks**: Real-time notifications
+- **Mobile App**: Native iOS/Android application
+- **ERP Integration**: SAP, Oracle connectors, etc.
+
+---
+
+**Developed with ❤️ to optimize commercial and logistics performance**
 
 [![GitHub stars](https://img.shields.io/github/stars/zoghlamimostafa/commercial-optimization-platform.svg?style=social&label=Star)](https://github.com/zoghlamimostafa/commercial-optimization-platform)
 [![GitHub forks](https://img.shields.io/github/forks/zoghlamimostafa/commercial-optimization-platform.svg?style=social&label=Fork)](https://github.com/zoghlamimostafa/commercial-optimization-platform/fork)
