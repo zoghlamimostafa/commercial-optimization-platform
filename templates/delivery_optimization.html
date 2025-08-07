@@ -1,0 +1,1196 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">    <div class="row">
+        <!-- Delivery Planning Form -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Planification de Livraison</h5>
+                </div>
+                <div class="card-body">
+                    <form id="deliveryForm">
+                        <div class="mb-3">
+                            <label for="commercial" class="form-label">Commercial</label>
+                            <select class="form-select" id="commercial" required>
+                                <option value="">Sélectionner un commercial</option>
+                                {% for code, name in commercials %}
+                                <option value="{{ code }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>                          <div class="mb-3">
+                            <label for="deliveryDate" class="form-label">Date de Livraison</label>
+                            <input type="date" class="form-control" id="deliveryDate" required>
+                            <small class="text-muted">Sélectionnez une date pour l'optimisation de livraison (par défaut: demain)</small>
+                        </div>
+                        
+                        <!-- Minimum Revenue Section -->
+                        <div class="mb-3">
+                            <div class="card border-warning">                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="TND"></i>
+                                        Chiffre d'affaires minimum
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="enableMinRevenue">
+                                        <label class="form-check-label" for="enableMinRevenue">
+                                            Activer le contrôle du chiffre d'affaires minimum
+                                        </label>
+                                    </div>                                    <div class="input-group" id="revenueInputGroup" style="display: none;">
+                                        <span class="input-group-text">TND</span>
+                                        <input type="number" class="form-control" id="minRevenue" 
+                                               placeholder="Montant minimum par jour" min="0" step="0.01">
+                                        <span class="input-group-text">/jour</span>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        Le système optimisera les livraisons pour atteindre ce montant minimum
+                                    </small>
+                                </div>
+                            </div>                        </div>
+                          <!-- Frequent Visits Section -->
+                        <div class="mb-3">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-calendar-check me-2"></i>
+                                        Nombre de visites fréquentes
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="enableFrequentVisits">
+                                        <label class="form-check-label" for="enableFrequentVisits">
+                                            Nombre minimum  des visites par jour
+                                        </label>
+                                    </div>                                    <div class="input-group" id="visitsInputGroup" style="display: none;">
+                                        <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                                        <input type="number" class="form-control" id="minFrequentVisits" 
+                                               placeholder="Nombre minimum de visites" min="1" step="1">
+                                        <span class="input-group-text">visites/jour</span>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        Le système privilégiera les clients avec un historique de visites fréquentes
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Products Filter Section -->
+                        <div class="mb-3">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-box-open me-2"></i>
+                                        Filtrer par produits
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="enableProductFilter">
+                                        <label class="form-check-label" for="enableProductFilter">
+                                            Sélectionner des produits spécifiques
+                                        </label>
+                                    </div>
+                                    <div id="productSelectGroup" style="display: none;">
+                                        <select class="form-select" id="productSelect" multiple size="3">
+                                            {% for code, name in products %}
+                                            <option value="{{ code }}">{{ name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted mt-1 d-block">
+                                            Maintenez Ctrl pour sélectionner plusieurs produits
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>                          <button type="submit" class="btn btn-primary w-100 mb-2" id="optimizeBtn" 
+                                  title="Optimiser la route (Raccourci: Ctrl+Entrée)">
+                            <span id="btnText">
+                                <i class="fas fa-route me-2"></i>
+                                Optimiser la Route
+                            </span>
+                            <span id="btnLoading" style="display: none;">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Optimisation en cours...
+                            </span>
+                        </button>
+                        
+                        <!-- Export Button -->
+                        <button type="button" class="btn btn-success w-100 mb-2" id="exportBtn" 
+                                onclick="exportDeliveryData()" style="display: none;"
+                                title="Exporter les résultats d'optimisation">
+                            <i class="fas fa-file-excel me-2"></i>
+                            Exporter les Résultats
+                        </button>
+                        
+                        <a href="{{ url_for('commercial_revenue_dashboard') }}" class="btn btn-outline-warning w-100">
+                            <i class="TND"></i>
+                            Gérer les Objectifs de Revenus
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>        <!-- Route Map -->
+        <div class="col-lg-8 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Itinéraire Optimisé</h5>
+                </div>
+                <div class="card-body">
+                    <div id="map" style="height: 400px; min-height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>    <!-- Delivery Plan Details -->
+    <div class="row mt-4">
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Itinéraire de Livraison</h5>
+                </div>
+                <div class="card-body">
+                    <div id="routeDetails">
+                        <!-- Route details will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Prévisions SARIMA</h5>
+                </div>
+                <div class="card-body">
+                    <div id="sarimaDetails">
+                        <!-- SARIMA predictions will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Liste de Chargement</h5>
+                </div>
+                <div class="card-body">
+                    <div id="packingList">
+                        <!-- Packing list will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""/>
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<!-- Leaflet Routing Machine for route planning -->
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<!-- Include delivery optimization functions -->
+<script src="{{ url_for('static', filename='js/delivery_optimization.js') }}"></script>
+
+<script>
+let map;
+let markers = [];
+let routingControl;
+
+// Set default date to tomorrow when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowString = tomorrow.toISOString().split('T')[0];
+    document.getElementById('deliveryDate').value = tomorrowString;
+    
+    // Add keyboard shortcut for quick optimization (Ctrl+Enter)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            const optimizeBtn = document.getElementById('optimizeBtn');
+            if (!optimizeBtn.disabled) {
+                optimizeBtn.click();
+            }
+        }
+    });
+});
+
+function initMap() {
+    // Initialize map centered on Ariana (Clediss location)
+    map = L.map('map').setView([36.862499, 10.195556], 7); // Ariana coordinates (Clediss location)
+    
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+}
+
+document.getElementById('deliveryForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Show loading state
+    const optimizeBtn = document.getElementById('optimizeBtn');
+    const btnText = document.getElementById('btnText');
+    const btnLoading = document.getElementById('btnLoading');
+    
+    optimizeBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    
+    const commercialCode = document.getElementById('commercial').value;
+    const deliveryDate = document.getElementById('deliveryDate').value;
+    const enableMinRevenue = document.getElementById('enableMinRevenue').checked;
+    const minRevenue = document.getElementById('minRevenue').value;
+    const enableFrequentVisits = document.getElementById('enableFrequentVisits').checked;
+    const minFrequentVisits = document.getElementById('minFrequentVisits').value;
+    const enableProductFilter = document.getElementById('enableProductFilter').checked;
+    const productSelect = document.getElementById('productSelect');
+
+    // Additional validation
+    if (!commercialCode) {
+        showErrorMessage('Veuillez sélectionner un commercial');
+        resetButton();
+        return;
+    }
+    
+    if (!deliveryDate) {
+        showErrorMessage('Veuillez sélectionner une date de livraison');
+        resetButton();
+        return;
+    }
+
+    // Check if date is not too far in the past
+    const selectedDate = new Date(deliveryDate);
+    const today = new Date();
+    const daysDiff = Math.ceil((selectedDate - today) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff < -365) {
+        showErrorMessage('La date sélectionnée est trop ancienne. Veuillez choisir une date plus récente.');
+        resetButton();
+        return;
+    }
+
+    // Prepare request data
+    const requestData = {
+        commercial_code: commercialCode,
+        delivery_date: deliveryDate
+    };
+    
+    // Add minimum revenue if enabled
+    if (enableMinRevenue && minRevenue) {
+        requestData.min_revenue = parseFloat(minRevenue);
+    }
+    
+    // Add frequent visits if enabled
+    if (enableFrequentVisits && minFrequentVisits) {
+        requestData.min_frequent_visits = parseInt(minFrequentVisits);
+    }
+    
+    // Add product filter if enabled
+    if (enableProductFilter && productSelect.selectedOptions.length > 0) {
+        requestData.product_codes = Array.from(productSelect.selectedOptions).map(option => option.value);
+    }
+
+    try {
+        const response = await fetch('/api/delivery/optimize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            hideErrorMessage();
+            displayDeliveryPlan(data);
+            showSuccessMessage('Optimisation réussie ! ' + (data.route ? data.route.length : 0) + ' arrêts trouvés.');
+            
+            // Store optimization result and show export button
+            window.lastOptimizationResult = data;
+            document.getElementById('exportBtn').style.display = 'block';
+        } else {
+            showErrorMessage('Erreur: ' + (data.error || 'Une erreur est survenue lors de l\'optimisation'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showErrorMessage('Une erreur de connexion est survenue. Veuillez vérifier votre connexion internet et réessayer.');
+    } finally {
+        resetButton();
+    }
+    
+    function resetButton() {
+        optimizeBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+    }
+});
+
+// Helper functions for better user feedback
+function showErrorMessage(message) {
+    hideMessages();
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-2';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    alertDiv.id = 'errorMessage';
+    
+    const form = document.getElementById('deliveryForm');
+    form.parentNode.insertBefore(alertDiv, form.nextSibling);
+}
+
+function showSuccessMessage(message) {
+    hideMessages();
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    alertDiv.id = 'successMessage';
+    
+    const form = document.getElementById('deliveryForm');
+    form.parentNode.insertBefore(alertDiv, form.nextSibling);
+    
+    // Auto-hide success message after 5 seconds
+    setTimeout(() => {
+        const successAlert = document.getElementById('successMessage');
+        if (successAlert) {
+            successAlert.remove();
+        }
+    }, 5000);
+}
+
+function hideMessages() {
+    const errorMsg = document.getElementById('errorMessage');
+    const successMsg = document.getElementById('successMessage');
+    if (errorMsg) errorMsg.remove();
+    if (successMsg) successMsg.remove();
+}
+
+function hideErrorMessage() {
+    const errorMsg = document.getElementById('errorMessage');
+    if (errorMsg) errorMsg.remove();
+}
+
+// Handle minimum revenue checkbox toggle
+document.getElementById('enableMinRevenue').addEventListener('change', function() {
+    const revenueInputGroup = document.getElementById('revenueInputGroup');
+    const minRevenueInput = document.getElementById('minRevenue');
+    
+    if (this.checked) {
+        revenueInputGroup.style.display = 'flex';
+        minRevenueInput.required = true;
+    } else {
+        revenueInputGroup.style.display = 'none';
+        minRevenueInput.required = false;
+        minRevenueInput.value = '';
+    }
+});
+
+// Handle frequent visits checkbox toggle
+document.getElementById('enableFrequentVisits').addEventListener('change', function() {
+    const visitsInputGroup = document.getElementById('visitsInputGroup');
+    const minFrequentVisitsInput = document.getElementById('minFrequentVisits');
+    
+    if (this.checked) {
+        visitsInputGroup.style.display = 'flex';
+        minFrequentVisitsInput.required = true;
+    } else {
+        visitsInputGroup.style.display = 'none';
+        minFrequentVisitsInput.required = false;
+        minFrequentVisitsInput.value = '';
+    }
+});
+
+// Handle product filter checkbox toggle
+document.getElementById('enableProductFilter').addEventListener('change', function() {
+    const productSelectGroup = document.getElementById('productSelectGroup');
+    const productSelect = document.getElementById('productSelect');
+    
+    if (this.checked) {
+        productSelectGroup.style.display = 'block';
+        productSelect.required = true;
+    } else {
+        productSelectGroup.style.display = 'none';
+        productSelect.required = false;
+        // Clear all selections
+        for (let i = 0; i < productSelect.options.length; i++) {
+            productSelect.options[i].selected = false;
+        }
+    }
+});
+
+// Add link to revenue dashboard when commercial is selected
+document.getElementById('commercial').addEventListener('change', function() {
+    const selectedCommercial = this.value;
+    const minRevenueValue = document.getElementById('minRevenue').value;
+    const minFrequentVisitsValue = document.getElementById('minFrequentVisits').value;
+    
+    if (selectedCommercial) {
+        // Update the revenue dashboard link to pre-fill commercial
+        const revenueDashboardLink = document.querySelector('a[href*="commercial_revenue_dashboard"]');
+        if (revenueDashboardLink) {
+            let url = new URL(revenueDashboardLink.href, window.location.origin);
+            url.searchParams.set('commercial', selectedCommercial);
+            if (minRevenueValue) {
+                url.searchParams.set('min_revenue', minRevenueValue);
+            }
+            if (minFrequentVisitsValue) {
+                url.searchParams.set('min_frequent_visits', minFrequentVisitsValue);
+            }
+            revenueDashboardLink.href = url.toString();
+        }
+    }
+});
+
+function displayDeliveryPlan(plan) {
+    // Clear previous markers and routes
+    clearMap();
+    
+    // Clear previous summary cards
+    const existingSummary = document.querySelector('.alert.alert-info');
+    if (existingSummary) {
+        existingSummary.remove();
+    }
+    
+    // Display commercial name at the top
+    document.querySelectorAll('.card-header h5.card-title').forEach(el => {
+        if (el.textContent.includes('Itinéraire Optimisé')) {
+            el.textContent = `Itinéraire Optimisé pour ${plan.commercial_name}`;
+        }
+    });
+
+    // Add a summary card at the top showing commercial info
+    const summaryDiv = document.createElement('div');
+    summaryDiv.className = 'alert alert-info mt-3 mb-3';
+
+    let summaryContent = `
+        <h5>Information de livraison:</h5>
+        <p><strong>Commercial:</strong> ${plan.commercial_name} (Code: ${plan.commercial_code})</p>
+        <p><strong>Date de livraison:</strong> ${plan.delivery_date}</p>
+        <p><strong>Distance totale:</strong> ${plan.total_distance} km</p>
+    `;
+
+    // Add revenue information if available
+    if (plan.revenue_info) {
+        const revenueInfo = plan.revenue_info;
+        summaryContent += `
+            <hr>
+            <h6 class="text-primary">Analyse du Chiffre d'Affaires:</h6>
+            <p><strong>CA estimé:</strong> ${revenueInfo.estimated_revenue ? revenueInfo.estimated_revenue.toFixed(2) : 'N/A'} TND</p>
+        `;
+
+        if (revenueInfo.min_revenue_target) {
+            summaryContent += `<p><strong>Objectif minimum:</strong> ${revenueInfo.min_revenue_target.toFixed(2)} TND</p>`;
+
+            if (revenueInfo.meets_target !== undefined) {
+                const statusClass = revenueInfo.meets_target ? 'text-success' : 'text-danger';
+                const statusIcon = revenueInfo.meets_target ? 'check-circle' : 'exclamation-triangle';
+                const statusText = revenueInfo.meets_target ? 'Objectif atteint' : 'Objectif non atteint';
+                summaryContent += `
+                    <p class="${statusClass}">
+                        <i class="fas fa-${statusIcon} me-1"></i>
+                        <strong>${statusText}</strong>
+                    </p>
+                `;
+
+                if (!revenueInfo.meets_target && revenueInfo.revenue_gap) {
+                    summaryContent += `
+                        <p class="text-warning">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Manque:</strong> ${revenueInfo.revenue_gap.toFixed(2)} TND
+                        </p>
+                    `;
+                }
+            }
+        }
+
+        if (revenueInfo.recommendations && revenueInfo.recommendations.length > 0) {
+            summaryContent += `
+                <hr>
+                <h6 class="text-warning">Recommandations:</h6>
+                <ul class="mb-0">
+                    ${revenueInfo.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            `;        }
+    }
+
+    // Add frequent visits information if available
+    if (plan.visits_info) {
+        const visitsInfo = plan.visits_info;
+        summaryContent += `
+            <hr>            <h6 class="text-info">Analyse des Visites Fréquentes:</h6>
+            <p><strong>Visites moyennes:</strong> ${visitsInfo.average_visits ? visitsInfo.average_visits.toFixed(1) : 'N/A'} /jour</p>
+        `;        if (visitsInfo.min_visits_target) {
+            summaryContent += `<p><strong>Objectif minimum:</strong> ${visitsInfo.min_visits_target} visites/jour</p>`;
+
+            if (visitsInfo.meets_target !== undefined) {
+                const statusClass = visitsInfo.meets_target ? 'text-success' : 'text-danger';
+                const statusIcon = visitsInfo.meets_target ? 'check-circle' : 'exclamation-triangle';
+                const statusText = visitsInfo.meets_target ? 'Objectif atteint' : 'Objectif non atteint';
+                summaryContent += `
+                    <p class="${statusClass}">
+                        <i class="fas fa-${statusIcon} me-1"></i>
+                        <strong>${statusText}</strong>
+                    </p>
+                `;
+
+                if (!visitsInfo.meets_target && visitsInfo.visits_gap) {
+                    summaryContent += `
+                        <p class="text-warning">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Manque:</strong> ${visitsInfo.visits_gap} visites
+                        </p>
+                    `;
+                }
+            }
+        }        if (visitsInfo.frequent_clients && visitsInfo.frequent_clients.length > 0) {
+            summaryContent += `
+                <hr>
+                <h6 class="text-info">Clients Fréquents:</h6>
+                <ul class="mb-0">
+                    ${visitsInfo.frequent_clients.map(client => {
+                        // Check if SARIMA predictions exist for this client
+                        const clientWithSarima = plan.route.find(stop => 
+                            stop.client_code === client.code || stop.client_name === client.name
+                        );
+                        
+                        let clientInfo = `${client.name} (${client.visits} visites/jour)`;
+                        
+                        if (clientWithSarima && clientWithSarima.predicted_products && 
+                            Object.keys(clientWithSarima.predicted_products).length > 0) {
+                            clientInfo += ` <span class="badge bg-success ms-1">
+                                <i class="fas fa-chart-line me-1"></i>SARIMA
+                            </span>`;
+                        } else {
+                            clientInfo += ` <span class="badge bg-secondary ms-1">
+                                <i class="fas fa-exclamation-circle me-1"></i>Pas de prédiction
+                            </span>`;
+                        }
+                        
+                        return `<li>${clientInfo}</li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
+    }
+
+    summaryContent += `<p><strong>Nombre d'arrêts:</strong> ${plan.route.length}</p>`;
+    summaryDiv.innerHTML = summaryContent;
+    
+    // Insert the summary before the first card
+    const firstCard = document.querySelector('.row .card');
+    if (firstCard) {
+        firstCard.parentNode.insertBefore(summaryDiv, firstCard);
+    }    // Display SARIMA predictions with a limited view
+    const initialSarimaCount = 1; // Show only first client prediction initially
+    let sarimaHtml = '<div class="accordion" id="sarimaAccordion">';
+    
+    // Check if there are routes with predicted products
+    const routesWithPredictions = plan.route.filter(stop => 
+        stop.predicted_products && Object.keys(stop.predicted_products).length > 0
+    );
+    
+    if (routesWithPredictions.length > 0) {
+        routesWithPredictions.slice(0, initialSarimaCount).forEach((stop, index) => {
+            sarimaHtml += `
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
+                            ${stop.client_name} (${stop.client_code}) - Prédictions
+                            <span class="badge bg-primary ms-2">
+                                ${Object.entries(stop.predicted_products).reduce((total, [product, data]) => {
+                                    const qty = typeof data === 'object' ? data.quantity : data;
+                                    const price = typeof data === 'object' ? data.price : (stop.product_prices && stop.product_prices[product] ? stop.product_prices[product] : 0);
+                                    return total + (qty * price);
+                                }, 0).toFixed(2)} TND
+                            </span>
+                        </button>
+                    </h2>
+                    <div id="collapse${index}" class="accordion-collapse collapse show" data-bs-parent="#sarimaAccordion">
+                        <div class="accordion-body">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Quantité Prévue</th>
+                                        <th>Prix Unitaire</th>
+                                        <th>Valeur Totale</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${Object.entries(stop.predicted_products)
+                                        .map(([product, data]) => {
+                                            const qty = typeof data === 'object' ? data.quantity : data;
+                                            const price = typeof data === 'object' ? data.price : (stop.product_prices && stop.product_prices[product] ? stop.product_prices[product] : 0);
+                                            const total = qty * price;
+                                            return `
+                                                <tr>
+                                                    <td>${product}</td>
+                                                    <td>${qty}</td>
+                                                    <td>${price.toFixed(2)} TND</td>
+                                                    <td class="fw-bold text-primary">${total.toFixed(2)} TND</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                </tbody>
+                            </table>
+                            <div class="mt-2 p-2 bg-light rounded">
+                                <strong>Valeur totale prévue: 
+                                    ${Object.entries(stop.predicted_products).reduce((total, [product, data]) => {
+                                        const qty = typeof data === 'object' ? data.quantity : data;
+                                        const price = typeof data === 'object' ? data.price : (stop.product_prices && stop.product_prices[product] ? stop.product_prices[product] : 0);
+                                        return total + (qty * price);
+                                    }, 0).toFixed(2)} TND
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        // No predictions available, show a message
+        sarimaHtml += `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Aucune prédiction SARIMA disponible pour les clients sélectionnés. 
+                Essayez de sélectionner d'autres produits ou clients.
+            </div>
+        `;
+    }    sarimaHtml += '</div>';
+    
+    // Add "See More" button if there are more clients with predictions
+    if (routesWithPredictions.length > initialSarimaCount) {
+        sarimaHtml += `
+            <button id="seeMoreSarimaBtn" class="btn btn-outline-primary mt-2 w-100">
+                Voir plus (${routesWithPredictions.length - initialSarimaCount} clients)
+            </button>
+        `;
+    }
+    
+    document.getElementById('sarimaDetails').innerHTML = sarimaHtml;
+    
+    // Add event listener for "See More Sarima" button
+    setTimeout(() => {
+        if (routesWithPredictions.length > initialSarimaCount) {
+            const seeMoreSarimaBtn = document.getElementById('seeMoreSarimaBtn');
+            if (seeMoreSarimaBtn) {
+                seeMoreSarimaBtn.addEventListener('click', function() {
+                    showFullSarimaPredictions(routesWithPredictions);
+                });
+            }
+        }
+    }, 100);
+
+    // Display route details with limited view
+    let routeHtml = '<ol class="list-group list-group-numbered">';
+    let waypoints = [];
+    
+    // Add commercial location as the starting waypoint
+    if (plan.commercial_location) {
+        const commercialLat = plan.commercial_location[0];
+        const commercialLng = plan.commercial_location[1];
+        waypoints.push(L.latLng(commercialLat, commercialLng));
+        
+        // Add commercial marker to map (starting point)
+        const commercialMarker = L.marker([commercialLat, commercialLng], {
+            title: plan.commercial_name,
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(map);
+        
+        commercialMarker.bindPopup(`<b>Point de départ</b><br>${plan.commercial_name}<br>Code: ${plan.commercial_code}`);
+        markers.push(commercialMarker);
+    }
+    
+    // Determine how many stops to show initially
+    const initialRouteCount = 3; // Show only the first 3 stops initially
+    
+    plan.route.forEach((stop, index) => {
+        const lat = stop.location[0];
+        const lng = stop.location[1];
+        
+        // Add waypoint for routing
+        waypoints.push(L.latLng(lat, lng));
+        
+        // Add marker to map
+        const marker = L.marker([lat, lng], {
+            title: stop.client_name
+        }).addTo(map);
+        
+        // Add a popup with client info
+        marker.bindPopup(`<b>${stop.client_name}</b><br>Code: ${stop.client_code}<br>Stop #${index + 1}`);
+        markers.push(marker);
+        
+        // Only show limited number of routes in the list
+        if (index < initialRouteCount) {
+            routeHtml += `
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">${stop.client_name}</div>
+                        <small>Code: ${stop.client_code}</small><br>
+                        Distance: ${stop.distance} km
+                    </div>
+                </li>
+            `;
+        }
+    });
+    
+    routeHtml += '</ol>';
+    
+    // Add "See More" button if there are more stops
+    if (plan.route.length > initialRouteCount) {
+        routeHtml += `
+            <button id="seeMoreRouteBtn" class="btn btn-outline-primary mt-2 w-100">
+                Voir plus (${plan.route.length - initialRouteCount} arrêts)
+            </button>
+        `;
+    }
+    
+    document.getElementById('routeDetails').innerHTML = routeHtml;
+    
+    // Add event listener for "See More Route" button
+    if (plan.route.length > initialRouteCount) {
+        document.getElementById('seeMoreRouteBtn').addEventListener('click', function() {
+            showFullRoute(plan.route);
+        });
+    }    // Display packing list with limited view and "See More" button
+    let packingHtml = '';
+    
+    // Check if packing list exists and has items
+    if (plan.packing_list && Object.keys(plan.packing_list).length > 0) {
+        packingHtml += '<ul class="list-group">';
+        const packingItems = Object.entries(plan.packing_list);
+        const initialDisplayCount = 5; // Number of items to show initially
+        
+        packingItems.slice(0, initialDisplayCount).forEach(([product, quantity]) => {
+            packingHtml += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${product}
+                    <span class="badge bg-primary rounded-pill">${quantity}</span>
+                </li>
+            `;
+        });
+        packingHtml += '</ul>';
+        
+        // Add "See More" button if there are more items
+        if (packingItems.length > initialDisplayCount) {
+            packingHtml += `
+                <button id="seeMoreBtn" class="btn btn-outline-primary mt-2 w-100">
+                    Voir plus (${packingItems.length - initialDisplayCount} produits)
+                </button>
+            `;
+        }
+        
+        // Add event listener for "See More" button
+        setTimeout(() => {
+            if (packingItems.length > initialDisplayCount) {
+                const seeMoreBtn = document.getElementById('seeMoreBtn');
+                if (seeMoreBtn) {
+                    seeMoreBtn.addEventListener('click', function() {
+                        showFullPackingList(plan.packing_list);
+                    });
+                }
+            }
+        }, 100);
+    } else {
+        // No packing list items available, show a message
+        packingHtml = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Aucun produit dans la liste de chargement. 
+                Essayez de sélectionner d'autres produits ou clients.
+            </div>
+        `;
+    }
+    
+    document.getElementById('packingList').innerHTML = packingHtml;
+
+    // Draw route on map if we have at least two waypoints
+    if (waypoints.length >= 2) {
+        // Create a routing control with waypoints
+        routingControl = L.Routing.control({
+            waypoints: waypoints,
+            routeWhileDragging: false,
+            showAlternatives: false,
+            fitSelectedRoutes: true,
+            lineOptions: {
+                styles: [{ color: '#6FA1EC', weight: 4 }]
+            },
+            createMarker: function() { return null; } // Don't create default markers, we already have our own
+        }).addTo(map);
+    }
+}
+
+function clearMap() {
+    // Clear markers
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+    
+    // Clear route
+    if (routingControl) {
+        map.removeControl(routingControl);
+        routingControl = null;
+    }
+}
+
+// Function to show full packing list
+function showFullPackingList(packingList) {
+    // Check if packing list exists and has items
+    const packingItems = packingList ? Object.entries(packingList) : [];
+    
+    // Create a modal to display all items
+    const modalHtml = `
+        <div class="modal fade" id="packingListModal" tabindex="-1" aria-labelledby="packingListModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="packingListModalLabel">Liste de Chargement Complète</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${packingItems.length > 0 ? `
+                            <ul class="list-group">
+                                ${packingItems.map(([product, quantity]) => `
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        ${product}
+                                        <span class="badge bg-primary rounded-pill">${quantity}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Aucun produit dans la liste de chargement.
+                                Essayez de sélectionner d'autres produits ou clients.
+                            </div>
+                        `}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+      // Add modal to document
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+    
+    try {
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('packingListModal'));
+        modal.show();
+        
+        // Remove modal from DOM when hidden
+        document.getElementById('packingListModal').addEventListener('hidden.bs.modal', function () {
+            try {
+                document.body.removeChild(modalContainer);
+            } catch (e) {
+                console.error('Error removing modal:', e);
+            }
+        });
+    } catch (e) {
+        console.error('Error showing packing list modal:', e);
+        // Clean up in case of error
+        try {
+            document.body.removeChild(modalContainer);
+        } catch (err) {
+            // Ignore cleanup errors
+        }
+        alert('Une erreur est survenue lors de l\'affichage de la liste de chargement.');
+    }
+}
+
+// Function to show full route
+function showFullRoute(route) {
+    // Create a modal to display all stops
+    const modalHtml = `
+        <div class="modal fade" id="routeModal" tabindex="-1" aria-labelledby="routeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="routeModalLabel">Itinéraire de Livraison Complet</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ol class="list-group list-group-numbered">
+                            ${route.map(stop => `
+                                <li class="list-group-item d-flex justify-content-between align-items-start">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">${stop.client_name}</div>
+                                        <small>Code: ${stop.client_code}</small><br>
+                                        Distance: ${stop.distance} km
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ol>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+      // Add modal to document
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+    
+    try {
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('routeModal'));
+        modal.show();
+        
+        // Remove modal from DOM when hidden
+        document.getElementById('routeModal').addEventListener('hidden.bs.modal', function () {
+            try {
+                document.body.removeChild(modalContainer);
+            } catch (e) {
+                console.error('Error removing modal:', e);
+            }
+        });
+    } catch (e) {
+        console.error('Error showing route modal:', e);
+        // Clean up in case of error
+        try {
+            document.body.removeChild(modalContainer);
+        } catch (err) {
+            // Ignore cleanup errors
+        }
+        alert('Une erreur est survenue lors de l\'affichage de l\'itinéraire complet.');
+    }
+}
+
+// Function to show full SARIMA predictions
+function showFullSarimaPredictions(route) {
+    // Filter routes to only include those with predictions
+    const routesWithPredictions = route.filter(stop => 
+        stop.predicted_products && Object.keys(stop.predicted_products).length > 0
+    );
+    
+    // Create a modal to display all predictions
+    const modalHtml = `
+        <div class="modal fade" id="sarimaModal" tabindex="-1" aria-labelledby="sarimaModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="sarimaModalLabel">Prévisions SARIMA Complètes</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${routesWithPredictions.length > 0 ? `
+                            <div class="accordion" id="sarimaFullAccordion">
+                                ${routesWithPredictions.map((stop, idx) => `
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseModal${idx}">
+                                                ${stop.client_name} (${stop.client_code}) - Prédictions
+                                                <span class="badge bg-success ms-2">
+                                                    ${Object.entries(stop.predicted_products).reduce((total, [product, data]) => {
+                                                        const qty = typeof data === 'object' ? data.quantity : data;
+                                                        const price = typeof data === 'object' ? data.price : (stop.product_prices && stop.product_prices[product] ? stop.product_prices[product] : 0);
+                                                        return total + (qty * price);
+                                                    }, 0).toFixed(2)} TND
+                                                </span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapseModal${idx}" class="accordion-collapse collapse" data-bs-parent="#sarimaFullAccordion">
+                                            <div class="accordion-body">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Produit</th>
+                                                            <th>Quantité Prévue</th>
+                                                            <th>Prix Unitaire</th>
+                                                            <th>Valeur Totale</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${Object.entries(stop.predicted_products)
+                                                            .map(([product, data]) => {
+                                                                const qty = typeof data === 'object' ? data.quantity : data;
+                                                                const price = typeof data === 'object' ? data.price : (stop.product_prices && stop.product_prices[product] ? stop.product_prices[product] : 0);
+                                                                const total = qty * price;
+                                                                return `
+                                                                    <tr>
+                                                                        <td>${product}</td>
+                                                                        <td>${qty}</td>
+                                                                        <td>${price.toFixed(2)} TND</td>
+                                                                        <td class="fw-bold text-success">${total.toFixed(2)} TND</td>
+                                                                    </tr>
+                                                                `;
+                                                            }).join('')}
+                                                    </tbody>
+                                                </table>
+                                                <div class="mt-2 p-2 bg-light rounded">
+                                                    <strong>Valeur totale prévue: 
+                                                        ${Object.entries(stop.predicted_products).reduce((total, [product, data]) => {
+                                                            const qty = typeof data === 'object' ? data.quantity : data;
+                                                            const price = typeof data === 'object' ? data.price : (stop.product_prices && stop.product_prices[product] ? stop.product_prices[product] : 0);
+                                                            return total + (qty * price);
+                                                        }, 0).toFixed(2)} TND
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Aucune prédiction SARIMA disponible pour les clients sélectionnés.
+                                Essayez de sélectionner d'autres produits ou clients.
+                            </div>
+                        `}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+      // Add modal to document
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+    
+    try {
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('sarimaModal'));
+        modal.show();
+        
+        // Remove modal from DOM when hidden
+        document.getElementById('sarimaModal').addEventListener('hidden.bs.modal', function () {
+            try {
+                document.body.removeChild(modalContainer);
+            } catch (e) {
+                console.error('Error removing modal:', e);
+            }
+        });
+    } catch (e) {
+        console.error('Error showing SARIMA modal:', e);
+        // Clean up in case of error
+        try {
+            document.body.removeChild(modalContainer);
+        } catch (err) {
+            // Ignore cleanup errors
+        }
+        alert('Une erreur est survenue lors de l\'affichage des prédictions SARIMA.');
+    }
+}
+
+// Export delivery optimization results
+function exportDeliveryData() {
+    if (!window.lastOptimizationResult) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Aucune donnée à exporter',
+            text: 'Veuillez d\'abord effectuer une optimisation.',
+            confirmButtonColor: '#3085d6'
+        });
+        return;
+    }
+    
+    try {
+        // Show loading
+        Swal.fire({
+            title: 'Export en cours...',
+            text: 'Préparation des données d\'optimisation, veuillez patienter.',
+            icon: 'info',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        const commercial = document.getElementById('commercial').value;
+        const deliveryDate = document.getElementById('delivery_date').value;
+        
+        // Create export data
+        const exportData = {
+            commercial_code: commercial,
+            delivery_date: deliveryDate
+        };
+        
+        // Make export request
+        fetch('/api/export/delivery_plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(exportData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.close();
+            
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Export réussi!',
+                    text: 'Les données d\'optimisation ont été exportées en JSON.',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            } else {
+                throw new Error(data.error || 'Erreur inconnue');
+            }
+        })
+        .catch(error => {
+            Swal.close();
+            console.error('Erreur export:', error);
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur d\'export',
+                text: 'Une erreur est survenue lors de l\'export: ' + error.message,
+                confirmButtonColor: '#d33'
+            });
+        });
+        
+    } catch (error) {
+        console.error('Erreur export:', error);
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur d\'export',
+            text: 'Une erreur est survenue lors de l\'export.',
+            confirmButtonColor: '#d33'
+        });
+    }
+}
+
+// Initialize map when page loads
+window.addEventListener('load', initMap);
+</script>
+{% endblock %}

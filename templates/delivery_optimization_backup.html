@@ -1,0 +1,672 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Delivery Planning Form -->        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Planification de Livraison</h5>
+                </div>
+        
+        if (revenueInfo.recommendations && revenueInfo.recommendations.length > 0) {
+            summaryContent += `
+                <hr>
+                <h6 class="text-warning">Recommandations:</h6>
+                <ul class="mb-0">
+                    ${revenueInfo.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            `;
+        }
+    }
+    
+    summaryContent += `<p><strong>Nombre d'arrêts:</strong> ${plan.route.length}</p>`;
+    summaryDiv.innerHTML = summaryContent;       <div class="card-header">
+                    <h5 class="card-title mb-0">Planification de Livraison</h5>
+                </div>
+                <div class="card-body">
+                    <form id="deliveryForm">
+                        <div class="mb-3">
+                            <label for="commercial" class="form-label">Commercial</label>
+                            <select class="form-select" id="commercial" required>
+                                <option value="">Sélectionner un commercial</option>                                {% for code, name in commercials %}
+                                <option value="{{ code }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>                        <div class="mb-3">
+                            <label for="deliveryDate" class="form-label">Date de Livraison</label>
+                            <input type="date" class="form-control" id="deliveryDate" required>
+                        </div>
+                        
+                        <!-- Minimum Revenue Section -->
+                        <div class="mb-3">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-euro-sign me-2"></i>
+                                        Chiffre d'affaires minimum
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="enableMinRevenue">
+                                        <label class="form-check-label" for="enableMinRevenue">
+                                            Activer le contrôle du chiffre d'affaires minimum
+                                        </label>
+                                    </div>
+                                    <div class="input-group" id="revenueInputGroup" style="display: none;">
+                                        <span class="input-group-text">TND</span>
+                                        <input type="number" class="form-control" id="minRevenue" 
+                                               placeholder="Montant minimum par jour" min="0" step="0.01">
+                                        <span class="input-group-text">/jour</span>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        Le système optimisera les livraisons pour atteindre ce montant minimum
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                          <button type="submit" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-route me-2"></i>
+                            Optimiser la Route
+                        </button>
+                        
+                        <a href="{{ url_for('commercial_revenue_dashboard') }}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-euro-sign me-2"></i>
+                            Gérer les Objectifs de Revenus
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Route Map -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Itinéraire Optimisé</h5>
+                </div>
+                <div class="card-body">
+                    <div id="map" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>    <!-- Delivery Plan Details -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Itinéraire de Livraison</h5>
+                </div>
+                <div class="card-body">
+                    <div id="routeDetails">
+                        <!-- Route details will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Prévisions SARIMA</h5>
+                </div>
+                <div class="card-body">
+                    <div id="sarimaDetails">
+                        <!-- SARIMA predictions will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Liste de Chargement</h5>
+                </div>
+                <div class="card-body">
+                    <div id="packingList">
+                        <!-- Packing list will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this before closing body tag -->
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""/>
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<!-- Leaflet Routing Machine for route planning -->
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<!-- Include delivery optimization functions -->
+<script src="{{ url_for('static', filename='js/delivery_optimization.js') }}"></script>
+<script>
+let map;
+let markers = [];
+let routingControl;
+
+function initMap() {
+    // Initialize map centered on Ariana (Clediss location)
+    map = L.map('map').setView([36.862499, 10.195556], 7); // Ariana coordinates (Clediss location)
+    
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+}
+
+document.getElementById('deliveryForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const commercialCode = document.getElementById('commercial').value;
+    const deliveryDate = document.getElementById('deliveryDate').value;
+    const enableMinRevenue = document.getElementById('enableMinRevenue').checked;
+    const minRevenue = document.getElementById('minRevenue').value;
+
+    // Prepare request data
+    const requestData = {
+        commercial_code: commercialCode,
+        delivery_date: deliveryDate
+    };
+    
+    // Add minimum revenue if enabled
+    if (enableMinRevenue && minRevenue) {
+        requestData.min_revenue = parseFloat(minRevenue);
+    }
+
+    try {
+        const response = await fetch('/api/delivery/optimize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            displayDeliveryPlan(data);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while optimizing the route');
+    }
+});
+
+// Handle minimum revenue checkbox toggle
+document.getElementById('enableMinRevenue').addEventListener('change', function() {
+    const revenueInputGroup = document.getElementById('revenueInputGroup');
+    const minRevenueInput = document.getElementById('minRevenue');
+    
+    if (this.checked) {
+        revenueInputGroup.style.display = 'flex';
+        minRevenueInput.required = true;
+    } else {
+        revenueInputGroup.style.display = 'none';
+        minRevenueInput.required = false;
+        minRevenueInput.value = '';
+    }
+});
+
+// Add link to revenue dashboard when commercial is selected
+document.getElementById('commercial').addEventListener('change', function() {
+    const selectedCommercial = this.value;
+    const minRevenueValue = document.getElementById('minRevenue').value;
+    
+    if (selectedCommercial) {
+        // Update the revenue dashboard link to pre-fill commercial
+        const revenueDashboardLink = document.querySelector('a[href*="commercial_revenue_dashboard"]');
+        if (revenueDashboardLink) {
+            let url = new URL(revenueDashboardLink.href, window.location.origin);
+            url.searchParams.set('commercial', selectedCommercial);
+            if (minRevenueValue) {
+                url.searchParams.set('min_revenue', minRevenueValue);
+            }
+            revenueDashboardLink.href = url.toString();
+        }
+    }
+});
+
+function displayDeliveryPlan(plan) {
+    // Clear previous markers and routes
+    clearMap();
+    
+    // Clear previous summary cards
+    const existingSummary = document.querySelector('.alert.alert-info');
+    if (existingSummary) {
+        existingSummary.remove();
+    }
+    
+    // Display commercial name at the top
+    document.querySelectorAll('.card-header h5.card-title').forEach(el => {
+        if (el.textContent.includes('Itinéraire Optimisé')) {
+            el.textContent = `Itinéraire Optimisé pour ${plan.commercial_name}`;
+        }
+    });    // Add a summary card at the top showing commercial info
+    const summaryDiv = document.createElement('div');
+    summaryDiv.className = 'alert alert-info mt-3 mb-3';
+
+    let summaryContent = `
+        <h5>Information de livraison:</h5>
+        <p><strong>Commercial:</strong> ${plan.commercial_name} (Code: ${plan.commercial_code})</p>
+        <p><strong>Date de livraison:</strong> ${plan.delivery_date}</p>
+        <p><strong>Distance totale:</strong> ${plan.total_distance} km</p>
+    `;
+
+    // Add revenue information if available
+    if (plan.revenue_info) {
+        const revenueInfo = plan.revenue_info;
+        summaryContent += `
+            <hr>
+            <h6 class="text-primary">Analyse du Chiffre d'Affaires:</h6>
+            <p><strong>CA estimé:</strong> ${revenueInfo.estimated_revenue ? revenueInfo.estimated_revenue.toFixed(2) : 'N/A'} TND</p>
+        `;
+
+        if (revenueInfo.min_revenue_target) {
+            summaryContent += `<p><strong>Objectif minimum:</strong> ${revenueInfo.min_revenue_target.toFixed(2)} TND</p>`;
+
+            if (revenueInfo.meets_target !== undefined) {
+                const statusClass = revenueInfo.meets_target ? 'text-success' : 'text-danger';
+                const statusIcon = revenueInfo.meets_target ? 'check-circle' : 'exclamation-triangle';
+                const statusText = revenueInfo.meets_target ? 'Objectif atteint' : 'Objectif non atteint';
+                summaryContent += `
+                    <p class="${statusClass}">
+                        <i class="fas fa-${statusIcon} me-1"></i>
+                        <strong>${statusText}</strong>
+                    </p>
+                `;
+
+                if (!revenueInfo.meets_target && revenueInfo.revenue_gap) {
+                    summaryContent += `
+                        <p class="text-warning">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Manque:</strong> ${revenueInfo.revenue_gap.toFixed(2)} TND
+                        </p>
+                    `;
+                }
+            }
+        }
+
+        if (revenueInfo.recommendations && revenueInfo.recommendations.length > 0) {
+            summaryContent += `
+                <hr>
+                <h6 class="text-warning">Recommandations:</h6>
+                <ul class="mb-0">
+                    ${revenueInfo.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            `;
+        }
+    }
+
+    summaryContent += `<p><strong>Nombre d'arrêts:</strong> ${plan.route.length}</p>`;
+    summaryDiv.innerHTML = summaryContent;
+    
+    // Insert the summary before the first card
+    const firstCard = document.querySelector('.row .card');
+    if (firstCard) {
+        firstCard.parentNode.insertBefore(summaryDiv, firstCard);
+    }// Display SARIMA predictions with a limited view
+    const initialSarimaCount = 1; // Show only first client prediction initially
+    let sarimaHtml = '<div class="accordion" id="sarimaAccordion">';
+    
+    plan.route.slice(0, initialSarimaCount).forEach((stop, index) => {
+        sarimaHtml += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
+                        ${stop.client_name} (${stop.client_code}) - Prédictions
+                    </button>
+                </h2>
+                <div id="collapse${index}" class="accordion-collapse collapse show" data-bs-parent="#sarimaAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Quantité Prévue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(stop.predicted_products)
+                                    .map(([product, qty]) => `
+                                        <tr>
+                                            <td>${product}</td>
+                                            <td>${qty}</td>
+                                        </tr>
+                                    `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    sarimaHtml += '</div>';
+    
+    // Add "See More" button if there are more clients
+    if (plan.route.length > initialSarimaCount) {
+        sarimaHtml += `
+            <button id="seeMoreSarimaBtn" class="btn btn-outline-primary mt-2 w-100">
+                Voir plus (${plan.route.length - initialSarimaCount} clients)
+            </button>
+        `;
+    }
+    
+    document.getElementById('sarimaDetails').innerHTML = sarimaHtml;
+    
+    // Add event listener for "See More Sarima" button
+    if (plan.route.length > initialSarimaCount) {
+        document.getElementById('seeMoreSarimaBtn').addEventListener('click', function() {
+            showFullSarimaPredictions(plan.route);
+        });
+    }// Display route details with limited view
+    let routeHtml = '<ol class="list-group list-group-numbered">';
+    let waypoints = [];
+    
+    // Add commercial location as the starting waypoint
+    if (plan.commercial_location) {
+        const commercialLat = plan.commercial_location[0];
+        const commercialLng = plan.commercial_location[1];
+        waypoints.push(L.latLng(commercialLat, commercialLng));
+        
+        // Add commercial marker to map (starting point)
+        const commercialMarker = L.marker([commercialLat, commercialLng], {
+            title: plan.commercial_name,
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(map);
+        
+        commercialMarker.bindPopup(`<b>Point de départ</b><br>${plan.commercial_name}<br>Code: ${plan.commercial_code}`);
+        markers.push(commercialMarker);
+    }
+    
+    // Determine how many stops to show initially
+    const initialRouteCount = 3; // Show only the first 3 stops initially
+    
+    plan.route.forEach((stop, index) => {
+        const lat = stop.location[0];
+        const lng = stop.location[1];
+        
+        // Add waypoint for routing
+        waypoints.push(L.latLng(lat, lng));
+        
+        // Add marker to map
+        const marker = L.marker([lat, lng], {
+            title: stop.client_name
+        }).addTo(map);
+        
+        // Add a popup with client info
+        marker.bindPopup(`<b>${stop.client_name}</b><br>Code: ${stop.client_code}<br>Stop #${index + 1}`);
+        markers.push(marker);
+        
+        // Only show limited number of routes in the list
+        if (index < initialRouteCount) {
+            routeHtml += `
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">${stop.client_name}</div>
+                        <small>Code: ${stop.client_code}</small><br>
+                        Distance: ${stop.distance} km
+                    </div>
+                </li>
+            `;
+        }
+    });
+    
+    routeHtml += '</ol>';
+    
+    // Add "See More" button if there are more stops
+    if (plan.route.length > initialRouteCount) {
+        routeHtml += `
+            <button id="seeMoreRouteBtn" class="btn btn-outline-primary mt-2 w-100">
+                Voir plus (${plan.route.length - initialRouteCount} arrêts)
+            </button>
+        `;
+    }
+    
+    document.getElementById('routeDetails').innerHTML = routeHtml;
+    
+    // Add event listener for "See More Route" button
+    if (plan.route.length > initialRouteCount) {
+        document.getElementById('seeMoreRouteBtn').addEventListener('click', function() {
+            showFullRoute(plan.route);
+        });
+    }// Display packing list with limited view and "See More" button
+    let packingHtml = '<ul class="list-group">';
+    const packingItems = Object.entries(plan.packing_list);
+    const initialDisplayCount = 5; // Number of items to show initially
+    
+    packingItems.slice(0, initialDisplayCount).forEach(([product, quantity]) => {
+        packingHtml += `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                ${product}
+                <span class="badge bg-primary rounded-pill">${quantity}</span>
+            </li>
+        `;
+    });
+    packingHtml += '</ul>';
+    
+    // Add "See More" button if there are more items
+    if (packingItems.length > initialDisplayCount) {
+        packingHtml += `
+            <button id="seeMoreBtn" class="btn btn-outline-primary mt-2 w-100">
+                Voir plus (${packingItems.length - initialDisplayCount} produits)
+            </button>
+        `;
+    }
+    
+    document.getElementById('packingList').innerHTML = packingHtml;
+    
+    // Add event listener for "See More" button
+    if (packingItems.length > initialDisplayCount) {
+        document.getElementById('seeMoreBtn').addEventListener('click', function() {
+            showFullPackingList(plan.packing_list);
+        });
+    }
+
+    // Draw route on map if we have at least two waypoints
+    if (waypoints.length >= 2) {
+        // Create a routing control with waypoints
+        routingControl = L.Routing.control({
+            waypoints: waypoints,
+            routeWhileDragging: false,
+            showAlternatives: false,
+            fitSelectedRoutes: true,
+            lineOptions: {
+                styles: [{ color: '#6FA1EC', weight: 4 }]
+            },
+            createMarker: function() { return null; } // Don't create default markers, we already have our own
+        }).addTo(map);
+    }
+}
+
+function clearMap() {
+    // Clear markers
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+    
+    // Clear route
+    if (routingControl) {
+        map.removeControl(routingControl);
+        routingControl = null;
+    }
+}
+
+// Function to show full packing list
+function showFullPackingList(packingList) {
+    // Create a modal to display all items
+    const modalHtml = `
+        <div class="modal fade" id="packingListModal" tabindex="-1" aria-labelledby="packingListModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="packingListModalLabel">Liste de Chargement Complète</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="list-group">
+                            ${Object.entries(packingList)
+                                .map(([product, quantity]) => `
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        ${product}
+                                        <span class="badge bg-primary rounded-pill">${quantity}</span>
+                                    </li>
+                                `).join('')}
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to document
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('packingListModal'));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    document.getElementById('packingListModal').addEventListener('hidden.bs.modal', function () {
+        document.body.removeChild(modalContainer);
+    });
+}
+
+// Function to show full route
+function showFullRoute(route) {
+    // Create a modal to display all stops
+    const modalHtml = `
+        <div class="modal fade" id="routeModal" tabindex="-1" aria-labelledby="routeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="routeModalLabel">Itinéraire de Livraison Complet</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ol class="list-group list-group-numbered">
+                            ${route.map(stop => `
+                                <li class="list-group-item d-flex justify-content-between align-items-start">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">${stop.client_name}</div>
+                                        <small>Code: ${stop.client_code}</small><br>
+                                        Distance: ${stop.distance} km
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ol>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to document
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('routeModal'));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    document.getElementById('routeModal').addEventListener('hidden.bs.modal', function () {
+        document.body.removeChild(modalContainer);
+    });
+}
+
+// Function to show full SARIMA predictions
+function showFullSarimaPredictions(route) {
+    // Create a modal to display all predictions
+    const modalHtml = `
+        <div class="modal fade" id="sarimaModal" tabindex="-1" aria-labelledby="sarimaModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="sarimaModalLabel">Prévisions SARIMA Complètes</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="accordion" id="sarimaFullAccordion">
+                            ${route.map((stop, idx) => `
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseModal${idx}">
+                                            ${stop.client_name} (${stop.client_code}) - Prédictions
+                                        </button>
+                                    </h2>
+                                    <div id="collapseModal${idx}" class="accordion-collapse collapse" data-bs-parent="#sarimaFullAccordion">
+                                        <div class="accordion-body">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Produit</th>
+                                                        <th>Quantité Prévue</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${Object.entries(stop.predicted_products)
+                                                        .map(([product, qty]) => `
+                                                            <tr>
+                                                                <td>${product}</td>
+                                                                <td>${qty}</td>
+                                                            </tr>
+                                                        `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to document
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('sarimaModal'));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    document.getElementById('sarimaModal').addEventListener('hidden.bs.modal', function () {
+        document.body.removeChild(modalContainer);
+    });
+}
+
+// Initialize map when page loads
+window.addEventListener('load', initMap);
+</script>
+{% endblock %}

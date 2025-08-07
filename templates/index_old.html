@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Prévisions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e67e22;
+        }
+        .feature-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .feature-card .card-header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        .delivery-optimization-section {
+            background: linear-gradient(135deg, #f6f9fc 0%, #edf3f8 100%);
+            padding: 4rem 0;
+            margin: 2rem 0;
+            border-radius: 20px;
+        }
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .nav-tabs .nav-item .nav-link {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--secondary-color);
+            border-radius: 0;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+        }
+        .nav-tabs .nav-item .nav-link.active {
+            background-color: #fff;
+            border-top: 3px solid var(--primary-color);
+            border-bottom-color: #fff;
+            font-weight: 600;
+        }        .nav-tabs .nav-item .nav-link[data-tab-type="commercial"].active {
+            border-top-color: var(--accent-color);
+        }
+        .nav-tabs .nav-item .nav-link[data-tab-type="visits"].active {
+            border-top-color: var(--accent-color);
+        }
+        .nav-tabs .nav-item .nav-link:hover:not(.active) {
+            background-color: #f1f1f1;
+            border-color: #dee2e6 #dee2e6 #dee2e6;
+        }
+        .tab-content {
+            background-color: #fff;
+            border-left: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            padding: 30px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.09);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 18px;
+        }
+        .card-header h2 {
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .card-footer {
+            background-color: #f8f9fa;
+            border-radius: 0 0 12px 12px !important;
+            padding: 15px;
+        }
+        .btn-lg {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1c6ca1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(52, 152, 219, 0.4);
+        }
+        .btn-accent {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+            color: white;
+        }
+        .btn-accent:hover {
+            background: linear-gradient(135deg, #d35400 0%, #a04000 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(230, 126, 34, 0.4);
+            color: white;
+        }
+        .alert-info {
+            background-color: #e8f4fd;
+            border-color: #c5e4fd;
+            color: #1a6baa;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .alert-commercial {
+            background-color: #fef4ea;
+            border-color: #fce0c5;
+            color: #c56a11;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #dde1e3;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03) inset;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+        }
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            padding: 14px 20px;
+            transition: all 0.2s ease;
+        }
+        .list-group-item:first-child {
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .list-group-item:last-child {
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .list-group-item-action:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+            color: #3498db;
+        }
+        .list-group-item-action.commercial:hover {
+            color: #e67e22;
+        }
+        .commercial-badge {
+            background-color: #e67e22;
+        }
+    </style>
+</head>
+<body>    <!-- Delivery Optimization Feature -->
+    <div class="container mt-4">
+        <div class="delivery-optimization-section">
+            <div class="container">
+                <div class="row justify-content-center mb-5">
+                    <div class="col-md-10">
+                        <h2 class="text-center mb-4">
+                            <i class="fas fa-route text-primary"></i>
+                            Nouvelle Fonctionnalité : Optimisation des Livraisons
+                        </h2>
+                        <p class="text-center lead">
+                            Optimisez vos tournées de livraison avec notre système intelligent basé sur SARIMA
+                        </p>
+                    </div>
+                </div>                <div class="row">
+                    <div class="col-md-3">
+                        <div class="feature-card card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line feature-icon"></i>
+                                <h4>Prévision de la Demande</h4>
+                                <p>Anticipez les besoins de vos clients grâce aux prévisions SARIMA basées sur l'historique des ventes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="feature-card card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-map-marked-alt feature-icon"></i>
+                                <h4>Optimisation des Routes</h4>
+                                <p>Calculez automatiquement l'itinéraire optimal pour vos livraisons en tenant compte de la localisation des clients</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="feature-card card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-truck-loading feature-icon"></i>
+                                <h4>Gestion du Chargement</h4>
+                                <p>Optimisez le chargement de vos véhicules en fonction des prévisions de commandes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="feature-card card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-bar feature-icon" style="color: var(--accent-color);"></i>
+                                <h4>Analyse des Visites</h4>
+                                <p>Analysez et prévoyez les visites commerciales à l'aide de modèles SARIMA pour une meilleure planification</p>
+                                <a href="{{ url_for('commercial_visits_page') }}" class="btn btn-sm btn-accent mt-2">
+                                    <i class="fas fa-arrow-right me-1"></i>Accéder
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col text-center">
+                        <a href="{{ url_for('delivery_optimization') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play-circle me-2"></i>
+                            Commencer l'Optimisation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>    </div>
+
+    <!-- Commercial Visits Analysis Feature Card -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-10 offset-md-1">
+                <div class="card">
+                    <div class="card-header" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+                        <h2 class="text-center">Nouvelle Fonctionnalité : Analyse des Visites Commerciales</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4><i class="fas fa-chart-bar me-2" style="color: var(--accent-color);"></i>Optimisez la planification de vos visites commerciales</h4>
+                                <p class="lead mb-4">Notre nouvel outil d'analyse vous permet de visualiser et prévoir les tendances de visites commerciales pour améliorer votre planification et maximiser vos résultats.</p>
+                                
+                                <ul class="list-group mb-4">
+                                    <li class="list-group-item"><i class="fas fa-check-circle me-2 text-success"></i>Visualisation des données historiques de visites</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle me-2 text-success"></i>Prévisions basées sur des modèles SARIMA avancés</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle me-2 text-success"></i>Identification des tendances saisonnières</li>
+                                    <li class="list-group-item"><i class="fas fa-check-circle me-2 text-success"></i>Export des données et analyses en Excel</li>
+                                </ul>
+                                
+                                <div class="mt-4">
+                                    <a href="{{ url_for('commercial_visits_page') }}" class="btn btn-accent btn-lg">
+                                        <i class="fas fa-chart-bar me-2"></i>Découvrir l'Analyse des Visites
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='img/visits_analysis.jpg') }}" class="img-fluid rounded" alt="Analyse des visites commerciales" onerror="this.src='https://via.placeholder.com/400x300?text=Analyse+des+Visites'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-10 offset-md-1">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="text-center">Tableau de Bord de Prévisions Commerciales</h2>
+                    </div>
+                      <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs" id="analysisTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="commercials-tab" data-bs-toggle="tab" data-bs-target="#commercials-content" 
+                                type="button" role="tab" aria-controls="commercials-content" aria-selected="true" data-tab-type="commercial">
+                                <i class="fas fa-user-tie me-2"></i>Analyse par Commercial
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-content" 
+                                type="button" role="tab" aria-controls="clients-content" aria-selected="false">
+                                <i class="fas fa-users me-2"></i>Analyse par Client
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-content" 
+                                type="button" role="tab" aria-controls="products-content" aria-selected="false">
+                                <i class="fas fa-box me-2"></i>Analyse par Produit
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="visits-tab" data-bs-toggle="tab" data-bs-target="#visits-content" 
+                                type="button" role="tab" aria-controls="visits-content" aria-selected="false" data-tab-type="visits">
+                                <i class="fas fa-chart-bar me-2"></i>Analyse des Visites
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="analysisTabContent">
+                        <!-- Commercials Tab -->
+                        <div class="tab-pane fade show active" id="commercials-content" role="tabpanel" aria-labelledby="commercials-tab">
+                            <div class="alert alert-commercial">
+                                <p><i class="fas fa-info-circle me-2"></i>Bienvenue dans l'analyse par commercial. Sélectionnez un commercial pour consulter ses performances et l'analyse de ses ventes par client.</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="search-commercial" class="form-label fw-bold"><i class="fas fa-search me-2"></i>Rechercher un commercial:</label>
+                                <input type="text" class="form-control" id="search-commercial" placeholder="Rechercher par code...">
+                            </div>
+                            
+                            <div id="commercial-search-results" class="list-group mb-4" style="display: none;"></div>
+                            
+                            <div class="text-center mb-4">
+                                <a href="{{ url_for('commercials_list') }}" class="btn btn-accent btn-lg">
+                                    <i class="fas fa-list me-2"></i>Voir tous les commerciaux
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Clients Tab -->
+                        <div class="tab-pane fade" id="clients-content" role="tabpanel" aria-labelledby="clients-tab">
+                            <div class="alert alert-info">
+                                <p><i class="fas fa-info-circle me-2"></i>Bienvenue dans le tableau de bord de prévisions commerciales. Sélectionnez un client pour consulter ses analyses et prévisions.</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="search-client" class="form-label fw-bold"><i class="fas fa-search me-2"></i>Rechercher un client:</label>
+                                <input type="text" class="form-control" id="search-client" placeholder="Rechercher par nom ou code...">
+                            </div>
+                            
+                            <div id="search-results" class="list-group mb-4" style="display: none;"></div>
+                            
+                            <div class="text-center mb-4">
+                                <a href="{{ url_for('clients_list') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-list me-2"></i>Voir tous les clients
+                                </a>
+                            </div>
+                        </div>
+                          <!-- Products Tab -->
+                        <div class="tab-pane fade" id="products-content" role="tabpanel" aria-labelledby="products-tab">
+                            <div class="alert alert-info">
+                                <p><i class="fas fa-info-circle me-2"></i>Analyse des ventes par produit. Sélectionnez un produit pour visualiser les détails et prévisions de ventes.</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="search-product" class="form-label fw-bold"><i class="fas fa-search me-2"></i>Rechercher un produit:</label>
+                                <input type="text" class="form-control" id="search-product" placeholder="Rechercher par code ou libellé...">
+                            </div>
+                            
+                            <div id="product-search-results" class="list-group mb-4" style="display: none;"></div>
+                            
+                            <div class="text-center mb-4">
+                                <a href="{{ url_for('products_list') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-list me-2"></i>Voir tous les produits
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Visits Analysis Tab -->
+                        <div class="tab-pane fade" id="visits-content" role="tabpanel" aria-labelledby="visits-tab">
+                            <div class="alert alert-commercial">
+                                <p><i class="fas fa-info-circle me-2"></i>L'analyse des visites commerciales vous permet de visualiser les tendances et de prévoir les visites futures pour une meilleure planification.</p>
+                            </div>
+                              <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="fas fa-chart-bar me-2"></i>Tendances des Visites</h5>
+                                            <p class="card-text">Visualisez les tendances historiques des visites commerciales et identifiez les schémas saisonniers.</p>
+                                            <img src="{{ url_for('static', filename='visits_images/visits_trend.png') }}" class="img-fluid my-3 rounded" alt="Aperçu des tendances de visites" onerror="this.style.display='none'">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="fas fa-lightbulb me-2"></i>Prévisions SARIMA</h5>
+                                            <p class="card-text">Obtenez des prévisions précises sur les futurs volumes de visites à l'aide du modèle SARIMA.</p>
+                                            <img src="{{ url_for('static', filename='visits_images/visits_forecast.png') }}" class="img-fluid my-3 rounded" alt="Aperçu des prévisions" onerror="this.style.display='none'">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="fas fa-user-tie me-2"></i>Performance des Commerciaux</h5>
+                                            <p class="card-text">Comparez les performances des différents commerciaux et optimisez les affectations.</p>
+                                            <img src="{{ url_for('static', filename='visits_images/commercial_performance.png') }}" class="img-fluid my-3 rounded" alt="Performance des commerciaux" onerror="this.style.display='none'">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="fas fa-map-marked-alt me-2"></i>Efficacité par Région</h5>
+                                            <p class="card-text">Analysez l'efficacité des visites par région géographique pour une meilleure allocation des ressources.</p>
+                                            <img src="{{ url_for('static', filename='visits_images/region_efficiency.png') }}" class="img-fluid my-3 rounded" alt="Efficacité par région" onerror="this.style.display='none'">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mb-4">
+                                <a href="{{ url_for('commercial_visits_page') }}" class="btn btn-accent btn-lg">
+                                    <i class="fas fa-chart-bar me-2"></i>Accéder à l'Analyse Complète des Visites
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-center">
+                            <a href="#" class="btn btn-sm btn-outline-secondary mx-1"><i class="fas fa-question-circle me-1"></i>Aide</a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary mx-1"><i class="fas fa-cog me-1"></i>Paramètres</a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary mx-1"><i class="fas fa-info-circle me-1"></i>À propos</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Commercial search functionality
+            $("#search-commercial").on("keyup", function() {
+                var searchTerm = $(this).val().trim();
+                
+                if (searchTerm.length >= 2) {
+                    $.ajax({
+                        url: "/search_commercials",
+                        method: "GET",
+                        data: { term: searchTerm },
+                        success: function(data) {
+                            $("#commercial-search-results").empty();
+                            
+                            if (data.length > 0) {
+                                data.forEach(function(commercial) {
+                                    $("#commercial-search-results").append(
+                                        `<a href="{{ url_for('commercial_dashboard', commercial_code='') }}${commercial.code}" class="list-group-item list-group-item-action commercial">
+                                            <i class="fas fa-user-tie me-2"></i>Commercial ${commercial.code}
+                                            <span class="badge rounded-pill commercial-badge float-end">${commercial.count} ventes</span>
+                                        </a>`
+                                    );
+                                });
+                                $("#commercial-search-results").show();
+                            } else {
+                                $("#commercial-search-results").html(
+                                    `<div class="list-group-item text-center text-muted">
+                                        <i class="fas fa-search me-2"></i>Aucun résultat trouvé
+                                    </div>`
+                                ).show();
+                            }
+                        },
+                        error: function() {
+                            // Fallback behavior if the search endpoint fails
+                            window.location.href = "{{ url_for('commercials_list') }}";
+                        }
+                    });
+                } else if (searchTerm.length === 0) {
+                    $("#commercial-search-results").hide();
+                }
+            });
+            
+            // Client search functionality
+            $("#search-client").on("keyup", function() {
+                var searchTerm = $(this).val().trim();
+                
+                if (searchTerm.length >= 2) {
+                    $.ajax({
+                        url: "{{ url_for('search_clients') }}",
+                        method: "GET",
+                        data: { term: searchTerm },
+                        success: function(data) {
+                            $("#search-results").empty();
+                            
+                            if (data.length > 0) {
+                                data.forEach(function(client) {
+                                    $("#search-results").append(
+                                        `<a href="{{ url_for('dashboard', client_code='') }}${client.code}" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-user me-2"></i>${client.nom} <span class="text-muted">(Code: ${client.code})</span>
+                                        </a>`
+                                    );
+                                });
+                                $("#search-results").show();
+                            } else {
+                                $("#search-results").html(
+                                    `<div class="list-group-item text-center text-muted">
+                                        <i class="fas fa-search me-2"></i>Aucun résultat trouvé
+                                    </div>`
+                                ).show();
+                            }
+                        }
+                    });
+                } else if (searchTerm.length === 0) {
+                    $("#search-results").hide();
+                }
+            });
+            
+            // Product search functionality
+            $("#search-product").on("keyup", function() {
+                var searchTerm = $(this).val().trim();
+                
+                if (searchTerm.length >= 2) {
+                    $.ajax({
+                        url: "/search_products",
+                        method: "GET",
+                        data: { term: searchTerm },
+                        success: function(data) {
+                            $("#product-search-results").empty();
+                            
+                            if (data.length > 0) {
+                                data.forEach(function(product) {
+                                    $("#product-search-results").append(
+                                        `<a href="{{ url_for('product_dashboard', product_code='') }}${product.code}" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-box me-2"></i>${product.libelle} <span class="text-muted">(Code: ${product.code})</span>
+                                        </a>`
+                                    );
+                                });
+                                $("#product-search-results").show();
+                            } else {
+                                $("#product-search-results").html(
+                                    `<div class="list-group-item text-center text-muted">
+                                        <i class="fas fa-search me-2"></i>Aucun résultat trouvé
+                                    </div>`
+                                ).show();
+                            }
+                        }
+                    });
+                } else if (searchTerm.length === 0) {
+                    $("#product-search-results").hide();
+                }
+            });
+            
+            // Remember tab selection using localStorage
+            $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                localStorage.setItem('activeTab', $(e.target).attr('id'));
+            });
+            
+            // Check if there's a stored tab selection
+            var activeTab = localStorage.getItem('activeTab');
+            if (activeTab) {
+                $('#' + activeTab).tab('show');
+            } else {
+                // Default to commercials tab if no stored preference
+                $('#commercials-tab').tab('show');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des Commerciaux{% endblock %}
+
+{% block page_title %}Gestion des Commerciaux{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-secondary {
+        background: linear-gradient(135deg, #7f8c8d 0%, #636e72 100%);
+        border: none;
+    }
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #636e72 0%, #4d5656 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .table th {
+        background-color: #f1f2f6;
+        border-top: none;
+        font-weight: 600;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+    }
+    .page-header {
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1rem;
+        position: relative;
+    }
+    .page-header h1 {
+        font-weight: 700;
+            }
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    .input-group-text {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un commercial...">
+        </div>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <div class="btn-group me-3" role="group">
+            <button onclick="exportCommercialsData()" class="btn btn-warning btn-sm">
+                <i class="fas fa-file-excel me-1"></i>Exporter Excel
+            </button>
+            <button onclick="exportCommercialsCSV()" class="btn btn-outline-warning btn-sm">
+                <i class="fas fa-file-csv me-1"></i>CSV
+            </button>
+        </div>
+        <span class="badge bg-warning rounded-pill fs-6">
+            <i class="fas fa-briefcase me-1"></i> Total: {{ commercials|length }} commerciaux
+        </span>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Liste des commerciaux</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-fingerprint me-1"></i>Code Commercial</th>
+                        <th><i class="fas fa-user-tie me-1"></i>Nom</th>
+                        <th class="text-center"><i class="fas fa-chart-line me-1"></i>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for code, name in commercials %}
+                    <tr class="align-middle">
+                        <td>{{ code }}</td>
+                        <td>{{ name }}</td>
+                        <td class="text-center">
+                            <a href="{{ url_for('commercial_dashboard', commercial_code=code) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-chart-line"></i> Analyser
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <span class="text-white"><i class="fas fa-info-circle me-1"></i>Cliquez sur "Analyser" pour voir les détails du commercial</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple search functionality
+    $(document).ready(function() {
+        $("#searchInput").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("table tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+            
+            // Show message if no results
+            if ($("table tbody tr:visible").length === 0) {
+                if ($("#noResults").length === 0) {
+                    $("table tbody").append('<tr id="noResults"><td colspan="3" class="text-center py-3">Aucun commercial trouvé</td></tr>');
+                }
+            } else {
+                $("#noResults").remove();
+            }
+        });
+    });
+    
+    // Export functions
+    function exportCommercialsData() {
+        Swal.fire({
+            title: 'Export en cours...',
+            text: 'Préparation des données commerciaux, veuillez patienter.',
+            icon: 'info',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Create hidden iframe for download
+        const downloadFrame = document.createElement('iframe');
+        downloadFrame.style.display = 'none';
+        document.body.appendChild(downloadFrame);
+        
+        downloadFrame.onload = () => {
+            Swal.close();
+            setTimeout(() => {
+                if (document.body.contains(downloadFrame)) {
+                    document.body.removeChild(downloadFrame);
+                }
+            }, 3000);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Export réussi!',
+                text: 'Le fichier Excel des données commerciaux a été téléchargé.',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        };
+        
+        downloadFrame.onerror = () => {
+            Swal.close();
+            document.body.removeChild(downloadFrame);
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur d\'export',
+                text: 'Une erreur est survenue lors de l\'export. Veuillez réessayer.'
+            });
+        };
+        
+        downloadFrame.src = '/api/export/commercials_data';
+    }
+    
+    function exportCommercialsCSV() {
+        // Create CSV content from current table
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Code Commercial,Nom Commercial\n";
+        
+        $("table tbody tr:visible").each(function() {
+            const row = $(this);
+            const code = row.find('td:eq(0)').text().trim();
+            const name = row.find('td:eq(1)').text().trim();
+            
+            if (code && name) {
+                csvContent += `"${code}","${name}"\n`;
+            }
+        });
+        
+        // Create download link
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `commercials_list_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show success message
+        Swal.fire({
+            icon: 'success',
+            title: 'CSV exporté!',
+            text: 'La liste des commerciaux a été exportée en CSV.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- jQuery UI CSS -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <!-- Tippy.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6/dist/tippy.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #1e293b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+            --dark-bg: #0f172a;
+            --sidebar-bg: #1e293b;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-light: #ffffff;
+            --text-muted: #ffffff;
+        }
+        
+        /* Smart text color rules */
+        * {
+            color: white !important;
+        }
+        
+        /* Black text for white/light backgrounds and content areas */
+        .bg-white, .bg-light, .bg-warning, .bg-info, .bg-success, .bg-primary,
+        .card-body, .modal-body, .table, .form-control, .btn-light, .btn-white,
+        .alert, .list-group-item, .dropdown-menu, .navbar-light,
+        .table td, .table th, .table tbody tr, .table thead tr,
+        .prediction-card, .bg-white *, .card-body *, .table *,
+        .table-responsive *, .modal-content *, .dropdown-item,
+        .form-control, .form-select, .form-check-label {
+            color: black !important;
+        }
+        
+        /* Force black text in specific 365 prediction areas */
+        .prediction-card *, .bg-white h4, .bg-white h5, .bg-white p,
+        .bg-white div, .bg-white span, .bg-white td, .bg-white th {
+            color: black !important;
+        }
+        
+        /* White text for dark backgrounds */
+        .bg-dark, .bg-secondary, .navbar-dark, .btn-dark, .btn-primary, .btn-secondary,
+        .table-dark, .table-dark *, .badge, .btn {
+            color: white !important;
+        }
+        
+        /* Exception for specific elements that need different colors */
+        .btn {
+            color: inherit !important;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            color: white;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-brand img {
+            height: 40px;
+            width: auto;
+        }
+
+        .sidebar-brand h4 {
+            color: var(--text-light);
+            font-weight: 600;
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 0;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-link i {
+            width: 18px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        /* Top Header */
+        .top-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .top-header .container-fluid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .user-dropdown {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-dropdown:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+            border: none;
+            padding: 1.25rem 1.5rem;
+            color: white;
+            border-radius: 16px 16px 0 0 !important;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            color: var(--text-light);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-color);
+        }
+
+        .metric-card.green::before { background: var(--success-color); }
+        .metric-card.blue::before { background: var(--info-color); }
+        .metric-card.red::before { background: var(--danger-color); }
+        .metric-card.purple::before { background: var(--primary-color); }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-card.green .metric-icon { color: var(--success-color); }
+        .metric-card.blue .metric-icon { color: var(--info-color); }
+        .metric-card.red .metric-icon { color: var(--danger-color); }
+        .metric-card.purple .metric-icon { color: var(--primary-color); }
+
+        /* Content Padding */
+        .content-wrapper {
+            padding: 2rem;
+        }
+
+        /* Form Controls */
+        .form-control {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+            color: white;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            border: none;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
+            border: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+            border: none;
+        }
+
+        /* Flash Messages */
+        .alert {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-light);
+        }
+
+        /* Tables */
+        .table {
+            color: var(--text-light);
+            background: transparent;
+        }
+
+        .table th {
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .table td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+        }
+        
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <img src="{{ url_for('static', filename='img/cropped-cropped-Sans-titre-1-1.png') }}" alt="Logo">
+            <h4>Dashboard</h4>
+        </div>
+        
+        <div class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Navigation</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('index') }}" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('clients_list') }}" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        Clients
+                    </a>
+                </div>                <div class="nav-item">
+                    <a href="{{ url_for('products_list') }}" class="nav-link">
+                        <i class="fas fa-box"></i>
+                        Produits
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('commercials_list') }}" class="nav-link">
+                        <i class="fas fa-user-tie"></i>
+                        Commerciaux
+                    </a>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Analytics</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('delivery_optimization') }}" class="nav-link">
+                        <i class="fas fa-route"></i>
+                        Optimisation Livraison
+                    </a>
+                </div>                <div class="nav-item">
+                    <a href="{{ url_for('commercial_revenue_dashboard') }}" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        Revenus & Prédictions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Header -->
+        <div class="top-header">
+            <div class="container-fluid">
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                
+                {% if session.user_login %}
+                <div class="dropdown">
+                    <div class="user-dropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-2"></i>
+                        {{ session.user_name or session.user_login }}
+                        <i class="fas fa-chevron-down ms-2"></i>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-header">
+                            <i class="fas fa-id-badge me-1"></i>{{ session.user_login }}
+                            {% if session.user_grade %}<br><small class="text-white">{{ session.user_grade }}</small>{% endif %}
+                        </span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else ('success' if category == 'success' else 'info') }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else ('check-circle' if category == 'success' else 'info-circle') }} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Main Content -->
+            {% block content %}{% endblock %}        </div>
+    </div>
+
+    <!-- Core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

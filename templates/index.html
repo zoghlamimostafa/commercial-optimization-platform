@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Optimisation Livraison{% endblock %}
+
+{% block page_title %}Tableau de Bord{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Row -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card green">
+            <div class="metric-icon">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div class="metric-value">{{ clients|length if clients else 'N/A' }}</div>
+            <div class="metric-label">Clients Actifs</div>
+            <div class="text-white small mt-2">
+                <i class="fas fa-users me-1"></i>
+                Base de données clients
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card blue">
+            <div class="metric-icon">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="metric-value">{{ commercials|length if commercials else 'N/A' }}</div>
+            <div class="metric-label">Commerciaux</div>
+            <div class="text-white small mt-2">
+                <i class="fas fa-chart-line me-1"></i>
+                Équipe commerciale
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card red">
+            <div class="metric-icon">
+                <i class="fas fa-route"></i>
+            </div>
+            <div class="metric-value">{{ products|length if products else 'N/A' }}</div>
+            <div class="metric-label">Produits</div>
+            <div class="text-white small mt-2">
+                <i class="fas fa-box me-1"></i>
+                Catalogue produits
+            </div>
+        </div>
+    </div>    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card purple">
+            <div class="metric-icon">
+                <i class="fas fa-map-marked-alt"></i>
+            </div>
+            <div class="metric-value">Actif</div>
+            <div class="metric-label">Optimisation</div>
+            <div class="text-white small mt-2">
+                <i class="fas fa-check-circle text-success me-1"></i>
+                Optimisation disponible
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Row -->
+<div class="row mb-4">
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Actions Rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('clients_list') }}" class="btn btn-primary">
+                        <i class="fas fa-users me-2"></i>Gérer les Clients
+                    </a>
+                    <a href="{{ url_for('commercials_list') }}" class="btn btn-warning">
+                        <i class="fas fa-user-tie me-2"></i>Équipe Commerciale
+                    </a>
+                    <a href="{{ url_for('delivery_optimization') }}" class="btn btn-success">
+                        <i class="fas fa-route me-2"></i>Optimiser Livraisons
+                    </a>
+                    <!-- HIDDEN: 365-day prediction functionality
+                    <a href="{{ url_for('prediction_365_dashboard') }}" class="btn btn-info">
+                        <i class="fas fa-calendar-alt me-2"></i>Prédiction 365 Jours
+                    </a>
+                    -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Actions Card -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>
+                    Exportation des Données
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6><i class="fas fa-table me-2"></i>Exports Sectoriels</h6>
+                        <div class="d-grid gap-2">
+                            <button onclick="exportData('clients')" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-users me-2"></i>Exporter Données Clients
+                            </button>
+                            <button onclick="exportData('commercials')" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-user-tie me-2"></i>Exporter Données Commerciaux
+                            </button>
+                            <button onclick="exportData('products')" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-box me-2"></i>Exporter Données Produits
+                            </button>
+                            <a href="{{ url_for('delivery_optimization') }}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-route me-2"></i>Optimisation Livraisons
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6><i class="fas fa-file-excel me-2"></i>Exports Globaux</h6>
+                        <div class="d-grid gap-2">
+                            <button onclick="exportData('dashboard')" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-chart-line me-2"></i>Exporter Dashboard
+                            </button>
+                            <button onclick="exportData('complete')" class="btn btn-outline-dark btn-sm">
+                                <i class="fas fa-database me-2"></i>Export Complet
+                            </button>
+                            <button onclick="showExportHistory()" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-history me-2"></i>Historique Exports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Les exports sont générés au format Excel avec plusieurs feuilles détaillées.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+
+<!-- Action Cards Row -->
+<div class="row">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="metric-icon" style="color: var(--success-color);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h5 class="card-title text-white">Gestion des Clients</h5>
+                <p class="card-text text-light">Gérez vos clients, visualisez leurs données et analysez leurs performances.</p>
+                <a href="{{ url_for('clients_list') }}" class="btn btn-success">
+                    <i class="fas fa-users me-2"></i>Voir les Clients
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="metric-icon" style="color: var(--info-color);">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h5 class="card-title text-white">Analyse des Produits</h5>
+                <p class="card-text text-light">Analysez les performances de vos produits et prévoyez les ventes futures.</p>
+                <a href="{{ url_for('products_list') }}" class="btn btn-primary">
+                    <i class="fas fa-box me-2"></i>Voir les Produits
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="metric-icon" style="color: var(--warning-color);">
+                    <i class="fas fa-route"></i>
+                </div>
+                <h5 class="card-title text-white">Optimisation des Livraisons</h5>
+                <p class="card-text text-light">Optimisez vos tournées de livraison avec notre algorithme intelligent.</p>
+                <a href="{{ url_for('delivery_optimization') }}" class="btn btn-warning">
+                    <i class="fas fa-route me-2"></i>Optimiser
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- HIDDEN: 365-day prediction card
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="metric-icon" style="color: var(--info-color);">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h5 class="card-title text-white">Prédiction 365 Jours</h5>
+                <p class="card-text text-light">Analyse prédictive avancée avec optimisation duale pour une année complète.</p>
+                <a href="{{ url_for('prediction_365_dashboard') }}" class="btn btn-info">
+                    <i class="fas fa-calendar-alt me-2"></i>Générer Prédictions
+                </a>
+            </div>
+        </div>
+    </div>
+    -->
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add active class to current navigation item
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+        
+        // If on homepage, make dashboard active
+        if (currentPath === '/' || currentPath === '/index') {
+            const dashboardLink = document.querySelector('a[href*="index"]');
+            if (dashboardLink) {
+                dashboardLink.classList.add('active');
+            }
+        }
+    });
+</script>
+
+<!-- Export Functionality -->
+<script>
+function exportData(type) {
+    // Show loading indicator
+    const loadingToast = Swal.fire({
+        title: 'Export en cours...',
+        text: 'Préparation des données, veuillez patienter.',
+        icon: 'info',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    const exportUrls = {
+        'clients': '/api/export/clients_data',
+        'commercials': '/api/export/commercials_data',
+        'products': '/api/export/products_data',
+        'dashboard': '/api/export/dashboard_data',
+        'complete': '/api/export/complete_data'
+    };
+    
+    const exportNames = {
+        'clients': 'Clients',
+        'commercials': 'Commerciaux',
+        'products': 'Produits', 
+        'dashboard': 'Dashboard',
+        'complete': 'Complet'
+    };
+    
+    if (!exportUrls[type]) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Type d\'export non reconnu.'
+        });
+        return;
+    }
+    
+    // Create hidden iframe for download
+    const downloadFrame = document.createElement('iframe');
+    downloadFrame.style.display = 'none';
+    document.body.appendChild(downloadFrame);
+    
+    // Handle successful download
+    let downloadStarted = false;
+    const downloadTimeout = setTimeout(() => {
+        if (!downloadStarted) {
+            Swal.close();
+            Swal.fire({
+                icon: 'success',
+                title: 'Export réussi!',
+                text: `Les données ${exportNames[type]} ont été exportées avec succès.`,
+                timer: 3000,
+                showConfirmButton: false
+            });
+            document.body.removeChild(downloadFrame);
+        }
+    }, 2000);
+    
+    // Set up download
+    downloadFrame.onload = () => {
+        downloadStarted = true;
+        clearTimeout(downloadTimeout);
+        Swal.close();
+        
+        // Clean up after a delay
+        setTimeout(() => {
+            if (document.body.contains(downloadFrame)) {
+                document.body.removeChild(downloadFrame);
+            }
+        }, 3000);
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Export terminé!',
+            text: `Le fichier Excel des données ${exportNames[type]} a été téléchargé.`,
+            timer: 3000,
+            showConfirmButton: false
+        });
+    };
+    
+    // Handle errors
+    downloadFrame.onerror = () => {
+        clearTimeout(downloadTimeout);
+        Swal.close();
+        document.body.removeChild(downloadFrame);
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur d\'export',
+            text: 'Une erreur est survenue lors de l\'export. Veuillez réessayer.'
+        });
+    };
+    
+    // Start download
+    downloadFrame.src = exportUrls[type];
+}
+
+function showExportHistory() {
+    Swal.fire({
+        title: 'Historique des Exports',
+        html: `
+            <div class="text-left">
+                <p><strong>Types d'exports disponibles:</strong></p>
+                <ul>
+                    <li><strong>Clients:</strong> Données complètes des clients, commandes, CA par commercial</li>
+                    <li><strong>Commerciaux:</strong> Performance commerciale, évolution mensuelle, produits vendus</li>
+                    <li><strong>Produits:</strong> Analyses des ventes par produit, tendances, top clients</li>
+                    <li><strong>Dashboard:</strong> KPIs globaux, activité quotidienne, top performers</li>
+                    <li><strong>Export Complet:</strong> Toutes les données dans un seul fichier</li>
+                </ul>
+                <p><strong>Format:</strong> Excel (.xlsx) avec feuilles multiples</p>
+                <p><strong>Mise à jour:</strong> Données en temps réel</p>
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Fermer',
+        width: '600px'
+    });
+}
+
+// Quick export shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey) {
+        switch(e.key) {
+            case 'C':
+                e.preventDefault();
+                exportData('clients');
+                break;
+            case 'V':
+                e.preventDefault();
+                exportData('commercials');
+                break;
+            case 'P':
+                e.preventDefault();
+                exportData('products');
+                break;
+            case 'D':
+                e.preventDefault();
+                exportData('dashboard');
+                break;
+            case 'A':
+                e.preventDefault();
+                exportData('complete');
+                break;
+        }
+    }
+});
+</script>
+{% endblock %}

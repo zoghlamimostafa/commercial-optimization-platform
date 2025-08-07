@@ -1,0 +1,1195 @@
+{% extends 'base.html' %}
+
+{% block title %}Analyse des Visites Commerciales{% endblock %}
+
+{% block head %}
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
+<!-- Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<style>
+    .chart-container {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 25px;
+        padding: 20px;
+    }
+    .filter-panel {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        margin-bottom: 20px;
+        transition: transform 0.3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stats-card h4 {
+        color: #3f51b5;
+        margin-top: 0;
+    }
+    .stats-card .value {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 300px;
+    }
+    .prediction-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .prediction-table th, .prediction-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .prediction-table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .prediction-table th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        background-color: #3f51b5;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Analyse et Prévision des Visites Commerciales</h1>
+      <!-- Filtre panel -->
+    <div class="filter-panel">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="commercialSelect"><i class="fas fa-user-tie me-1"></i>Commercial:</label>
+                <select class="form-control" id="commercialSelect">
+                    <option value="">Tous les commerciaux</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="dateDebut"><i class="fas fa-calendar-alt me-1"></i>Date de début:</label>
+                <input type="date" class="form-control" id="dateDebut" value="2024-01-01">
+            </div>
+            <div class="col-md-3">
+                <label for="dateFin"><i class="fas fa-calendar-alt me-1"></i>Date de fin:</label>
+                <input type="date" class="form-control" id="dateFin" value="2024-12-31">
+            </div>
+            <div class="col-md-3">
+                <label for="predictionDays"><i class="fas fa-chart-line me-1"></i>Jours à prédire:</label>
+                <select class="form-control" id="predictionDays">
+                    <option value="30">30 jours</option>
+                    <option value="90" selected>90 jours</option>
+                    <option value="180">6 mois</option>
+                    <option value="365">1 an</option>
+                    <option value="730">2 ans</option>
+                </select>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <button id="analyzeBtn" class="btn btn-primary">
+                    <i class="fas fa-chart-line me-1"></i>Analyser
+                </button>
+                <button id="exportCsvBtn" class="btn btn-secondary ms-2" disabled>
+                    <i class="fas fa-file-csv me-1"></i>Exporter CSV
+                </button>
+                <button id="exportExcelBtn" class="btn btn-success ms-2" disabled>
+                    <i class="fas fa-file-excel me-1"></i>Exporter Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Choix Commercial Panel -->
+    <div class="chart-container mb-4" id="choixCommercial" style="display: none;">
+        <h3><i class="fas fa-user-tie me-2"></i>Sélection du Commercial</h3>
+        <div class="alert alert-info">
+            <p><i class="fas fa-info-circle me-2"></i>Sélectionnez un commercial pour afficher ses données individuelles ou comparer plusieurs commerciaux.</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="searchCommercial" class="form-label"><i class="fas fa-search me-1"></i>Rechercher un commercial:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchCommercial" placeholder="Entrez un code ou un nom de commercial...">
+                        <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="commercialsList" class="list-group" style="max-height: 300px; overflow-y: auto;">
+                    <!-- Liste des commerciaux ici -->
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-check-circle me-1"></i>Commerciaux sélectionnés:</label>
+                    <div id="selectedCommercials" class="mb-3">
+                        <div class="alert alert-secondary text-center" id="noCommercialSelected">
+                            Aucun commercial sélectionné
+                        </div>
+                        <div id="selectedCommercialBadges">
+                            <!-- Badges des commerciaux sélectionnés -->
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button id="compareBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-chart-bar me-1"></i>Comparer les commerciaux
+                    </button>
+                    <button id="resetSelectionBtn" class="btn btn-outline-secondary" disabled>
+                        <i class="fas fa-undo me-1"></i>Réinitialiser la sélection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistiques -->
+    <div id="statsContainer" class="row" style="display: none;">
+        <!-- Les statistiques seront ajoutées ici dynamiquement -->
+    </div>
+    
+    <!-- Graphiques -->
+    <div class="chart-container">
+        <div id="loadingPlot" class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Chargement...</span>
+            </div>
+        </div>
+        <div id="plotContainer" style="display: none;">
+            <img id="analysisPlot" class="img-fluid" src="" alt="Graphique d'analyse des visites">
+        </div>
+    </div>
+    
+    <!-- Tableau des prédictions -->
+    <div class="chart-container">
+        <h3>Prédictions détaillées</h3>
+        <div id="loadingPredictions" class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Chargement...</span>
+            </div>
+        </div>
+        <div id="predictionsTableContainer" style="display: none;">
+            <table id="predictionsTable" class="prediction-table">
+                <thead>
+                    <tr>
+                        <th>Commercial</th>
+                        <th>Date</th>
+                        <th>Visites prédites</th>
+                        <th>Min (95%)</th>
+                        <th>Max (95%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Les prédictions seront ajoutées ici dynamiquement -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/commercial_visits_fix.js') }}"></script>
+<script>    $(document).ready(function() {
+        // Charger la liste des commerciaux
+        loadCommercials();
+        
+        // Écouteur pour le bouton d'analyse
+        $('#analyzeBtn').click(function() {
+            analyzeVisits();
+        });
+        
+        // Écouteur pour le bouton d'exportation CSV
+        $('#exportCsvBtn').click(function() {
+            exportPredictionsCSV();
+        });
+        
+        // Écouteur pour le bouton d'exportation Excel
+        $('#exportExcelBtn').click(function() {
+            exportPredictionsExcel();
+        });
+        
+        // Afficher le panneau de choix commercial
+        $('#commercialSelect').click(function() {
+            $('#choixCommercial').slideDown();
+        });
+        
+        // Écouteur pour la recherche de commerciaux
+        $('#searchCommercial').on('input', function() {
+            filterCommercials($(this).val());
+        });
+        
+        // Écouteur pour le bouton de réinitialisation de la recherche
+        $('#clearSearchBtn').click(function() {
+            $('#searchCommercial').val('');
+            filterCommercials('');
+        });
+        
+        // Écouteur pour le bouton de réinitialisation de la sélection
+        $('#resetSelectionBtn').click(function() {
+            resetCommercialSelection();
+        });
+        
+        // Écouteur pour le bouton de comparaison
+        $('#compareBtn').click(function() {
+            compareSelectedCommercials();
+        });
+        
+        // Charger la liste des commerciaux pour la sélection
+        loadAllCommercials();
+    });
+    
+    // Tableau pour stocker les commerciaux sélectionnés
+    var selectedCommercials = [];
+    
+    function loadAllCommercials() {
+        $.ajax({
+            url: '/api/commercials',
+            type: 'GET',
+            success: function(data) {
+                var commercialsList = $('#commercialsList');
+                commercialsList.empty();
+                
+                if (data.length > 0) {
+                    data.forEach(function(commercial) {
+                        const commercialHtml = `
+                            <a href="#" class="list-group-item list-group-item-action commercial-item" 
+                               data-code="${commercial.code}" data-nom="${commercial.nom}" data-count="${commercial.count}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">${commercial.nom}</h5>
+                                    <span class="badge bg-primary rounded-pill">${commercial.count} visites</span>
+                                </div>
+                                <small class="text-muted">Code: ${commercial.code}</small>
+                            </a>
+                        `;
+                        commercialsList.append(commercialHtml);
+                    });
+                    
+                    // Ajouter l'écouteur d'événements pour la sélection des commerciaux
+                    $('.commercial-item').click(function(e) {
+                        e.preventDefault();
+                        const code = $(this).data('code');
+                        const nom = $(this).data('nom');
+                        const count = $(this).data('count');
+                        
+                        toggleCommercialSelection(code, nom, count);
+                    });
+                } else {
+                    commercialsList.append('<div class="list-group-item">Aucun commercial trouvé</div>');
+                }
+            },
+            error: function(jqXHR) {
+                console.error('Erreur lors du chargement des commerciaux:', jqXHR.responseText);
+                $('#commercialsList').html('<div class="list-group-item text-danger">Erreur lors du chargement des commerciaux</div>');
+            }
+        });
+    }
+    
+    function filterCommercials(searchTerm) {
+        if (!searchTerm) {
+            // Si le terme de recherche est vide, afficher tous les commerciaux
+            $('.commercial-item').show();
+            return;
+        }
+        
+        searchTerm = searchTerm.toLowerCase();
+        
+        // Filtrer les commerciaux affichés
+        $('.commercial-item').each(function() {
+            const code = $(this).data('code').toString().toLowerCase();
+            const nom = $(this).data('nom').toString().toLowerCase();
+            
+            if (code.includes(searchTerm) || nom.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+    
+    function toggleCommercialSelection(code, nom, count) {
+        // Vérifier si le commercial est déjà sélectionné
+        const index = selectedCommercials.findIndex(c => c.code === code);
+        
+        if (index === -1) {
+            // Ajouter le commercial s'il n'est pas déjà sélectionné
+            selectedCommercials.push({ code, nom, count });
+        } else {
+            // Supprimer le commercial s'il est déjà sélectionné
+            selectedCommercials.splice(index, 1);
+        }
+        
+        // Mettre à jour l'affichage
+        updateSelectedCommercialsDisplay();
+    }
+    
+    function updateSelectedCommercialsDisplay() {
+        const badgesContainer = $('#selectedCommercialBadges');
+        const noSelectedMessage = $('#noCommercialSelected');
+        
+        if (selectedCommercials.length === 0) {
+            // Aucun commercial sélectionné
+            badgesContainer.hide();
+            noSelectedMessage.show();
+            $('#resetSelectionBtn').prop('disabled', true);
+            $('#compareBtn').prop('disabled', true);
+            
+            // Mettre à jour le select principal
+            $('#commercialSelect').val('');
+        } else {
+            // Afficher les badges pour les commerciaux sélectionnés
+            badgesContainer.empty().show();
+            noSelectedMessage.hide();
+            
+            selectedCommercials.forEach(function(commercial) {
+                const badgeHtml = `
+                    <span class="badge bg-primary p-2 m-1 d-inline-flex align-items-center">
+                        <span class="me-1">${commercial.nom} (${commercial.count} visites)</span>
+                        <button type="button" class="btn-close btn-close-white" 
+                                aria-label="Supprimer" 
+                                onclick="removeCommercial('${commercial.code}')"></button>
+                    </span>
+                `;
+                badgesContainer.append(badgeHtml);
+            });
+            
+            // Activer les boutons
+            $('#resetSelectionBtn').prop('disabled', false);
+            $('#compareBtn').prop('disabled', selectedCommercials.length < 2); // Activer seulement si au moins 2 commerciaux sont sélectionnés
+            
+            // Si un seul commercial est sélectionné, le mettre dans le select principal
+            if (selectedCommercials.length === 1) {
+                $('#commercialSelect').val(selectedCommercials[0].code);
+            } else {
+                $('#commercialSelect').val(''); // Plusieurs commerciaux sélectionnés, utiliser "Tous"
+            }
+        }
+        
+        // Mettre en évidence les commerciaux sélectionnés dans la liste
+        $('.commercial-item').removeClass('active');
+        selectedCommercials.forEach(function(commercial) {
+            $(`.commercial-item[data-code="${commercial.code}"]`).addClass('active');
+        });
+    }
+    
+    function removeCommercial(code) {
+        const index = selectedCommercials.findIndex(c => c.code === code);
+        if (index !== -1) {
+            selectedCommercials.splice(index, 1);
+            updateSelectedCommercialsDisplay();
+        }
+    }
+    
+    function resetCommercialSelection() {
+        selectedCommercials = [];
+        updateSelectedCommercialsDisplay();
+    }    function compareSelectedCommercials() {
+        if (selectedCommercials.length < 2) {
+            toastr.warning('Veuillez sélectionner au moins 2 commerciaux pour effectuer une comparaison.');
+            return;
+        }
+        
+        // Préparation des paramètres pour l'analyse
+        const dateDebut = $('#dateDebut').val();
+        const dateFin = $('#dateFin').val();
+        const days = $('#predictionDays').val();
+        
+        // Validation des dates
+        if (new Date(dateDebut) > new Date(dateFin)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de dates',
+                text: 'La date de début doit être antérieure à la date de fin',
+                confirmButtonColor: '#3f51b5'
+            });
+            return;
+        }
+        
+        // Réinitialiser et afficher les indicateurs de chargement
+        $('#statsContainer').hide().empty();
+        $('#plotContainer').hide();
+        $('#loadingPlot').show();
+        $('#predictionsTableContainer').hide();
+        $('#loadingPredictions').show();
+        $('#exportCsvBtn').prop('disabled', true);
+        $('#exportExcelBtn').prop('disabled', true);
+        
+        // Montrer un toast de chargement
+        const loadingToast = toastr.info('Analyse comparative en cours...', 'Patientez', {timeOut: 0});
+        
+        try {
+            // Créer des promesses pour chaque commercial
+            const promises = selectedCommercials.map(commercial => {
+                return new Promise((resolve, reject) => {
+                    $.ajax({
+                        url: '/api/predict_visits',
+                        type: 'GET',
+                        data: {
+                            commercial_code: commercial.code,
+                            date_debut: dateDebut,
+                            date_fin: dateFin,
+                            days_to_predict: days
+                        },
+                        success: function(data) {
+                            resolve({
+                                data: data,
+                                commercial: commercial
+                            });
+                        },
+                        error: reject
+                    });
+                });
+            });
+            
+            // Exécuter toutes les promesses
+            Promise.all(promises)
+                .then(results => {
+                    // Fusionner les résultats
+                    const mergedData = {};
+                    
+                    results.forEach((result) => {
+                        const data = result.data;
+                        const commercial = result.commercial;
+                        
+                        if (data.error) {
+                            toastr.warning(`Erreur pour ${commercial.nom}: ${data.error}`);
+                        } else {
+                            const commCode = commercial.code;
+                            if (data[commCode]) {
+                                mergedData[commCode] = data[commCode];
+                                // Store the commercial name for display
+                                mergedData[commCode].displayName = commercial.nom;
+                            } else {
+                                // Si la clé n'est pas trouvée, utiliser la première clé disponible
+                                const firstKey = Object.keys(data)[0];
+                                if (firstKey) {
+                                    mergedData[commCode] = data[firstKey];
+                                    // Store the commercial name for display
+                                    mergedData[commCode].displayName = commercial.nom;
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Masquer les indicateurs de chargement
+                    $('#loadingPlot').hide();
+                    $('#loadingPredictions').hide();
+                    toastr.clear(loadingToast);
+                    
+                    if (Object.keys(mergedData).length === 0) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur d\'analyse',
+                            text: 'Aucune donnée valide n\'a été récupérée pour les commerciaux sélectionnés.',
+                            confirmButtonColor: '#3f51b5'
+                        });
+                        return;
+                    }
+                    
+                    // Générer le graphique de comparaison
+                    generateComparisonPlot(mergedData, dateDebut, dateFin);
+                    
+                    // Afficher les statistiques
+                    displayStats(mergedData);
+                    
+                    // Afficher le tableau des prédictions
+                    displayPredictionTable(mergedData);
+                    
+                    // Activer les boutons d'exportation
+                    $('#exportCsvBtn').prop('disabled', false);
+                    $('#exportExcelBtn').prop('disabled', false);
+                    
+                    // Stocker les données pour l'exportation
+                    window.predictionsData = mergedData;
+                    
+                    // Notification de succès
+                    toastr.success('Analyse comparative générée avec succès');
+                    
+                    // Scroller vers le tableau de résultats
+                    $('html, body').animate({
+                        scrollTop: $("#statsContainer").offset().top - 20
+                    }, 500);
+                })
+                .catch(error => {
+                    $('#loadingPlot').hide();
+                    $('#loadingPredictions').hide();
+                    toastr.clear(loadingToast);
+                    
+                    console.error('Erreur lors de la comparaison:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de serveur',
+                        text: 'Impossible de générer l\'analyse comparative: ' + (error.responseText || error),
+                        confirmButtonColor: '#3f51b5'
+                    });
+                });
+        } catch (e) {
+            $('#loadingPlot').hide();
+            $('#loadingPredictions').hide();
+            toastr.clear(loadingToast);
+            console.error('Exception lors de la comparaison:', e);
+            toastr.error('Une erreur est survenue lors de la comparaison.');
+        }
+    }function loadCommercials() {
+        $.ajax({
+            url: '/api/commercials',
+            type: 'GET',
+            success: function(data) {
+                var select = $('#commercialSelect');
+                // Clear existing options
+                select.empty();
+                select.append($('<option>', {
+                    value: '',
+                    text: 'Tous les commerciaux'
+                }));
+                
+                if (data.length > 0) {
+                    data.forEach(function(item) {
+                        select.append($('<option>', {
+                            value: item.code,
+                            text: item.nom || ('Commercial ' + item.code + ' (' + item.count + ' visites)')
+                        }));
+                    });
+                } else {
+                    select.append($('<option>', {
+                        value: '',
+                        text: 'Aucun commercial trouvé'
+                    }));
+                }
+            },
+            error: function(jqXHR) {
+                console.error('Erreur lors du chargement des commerciaux:', jqXHR.responseText);
+                toastr.error('Erreur lors du chargement des commerciaux. Veuillez rafraîchir la page.');
+            }
+        });
+    }function analyzeVisits() {
+        console.log("Original analyzeVisits called - modifying behavior for no commercial data");
+        // Récupérer les paramètres
+        const dateDebut = $('#dateDebut').val();
+        const dateFin = $('#dateFin').val();
+        const days = $('#predictionDays').val();
+        
+        // Validation des dates
+        if (new Date(dateDebut) > new Date(dateFin)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de dates',
+                text: 'La date de début doit être antérieure à la date de fin',
+                confirmButtonColor: '#3f51b5'
+            });
+            return;
+        }
+        
+        // Réinitialiser et afficher les indicateurs de chargement
+        $('#statsContainer').hide().empty();
+        $('#plotContainer').hide();
+        $('#loadingPlot').show();
+        $('#predictionsTableContainer').hide();
+        $('#loadingPredictions').show();
+        $('#exportCsvBtn').prop('disabled', true);
+        $('#exportExcelBtn').prop('disabled', true);
+        
+        // Montrer un toast de chargement
+        const loadingToast = toastr.info('Analyse en cours...', 'Patientez', {timeOut: 0});
+        
+        // Charger le graphique d'analyse
+        $.ajax({
+            url: '/api/visits_analysis_plot',
+            type: 'GET',
+            data: {
+                date_debut: dateDebut,
+                date_fin: dateFin
+            },
+            success: function(data) {
+                $('#loadingPlot').hide();
+                
+                if (data.error) {
+                    toastr.clear(loadingToast);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur d\'analyse',
+                        text: data.error,
+                        confirmButtonColor: '#3f51b5'
+                    });
+                    return;
+                }
+                
+                // Afficher le graphique
+                $('#analysisPlot').attr('src', 'data:image/png;base64,' + data.plot);
+                $('#plotContainer').show();
+                
+                // Charger les prédictions
+                $.ajax({
+                    url: '/api/predict_visits',
+                    type: 'GET',
+                    data: {
+                        date_debut: dateDebut,
+                        date_fin: dateFin,
+                        days_to_predict: days
+                    },
+                    success: function(data) {
+                        $('#loadingPredictions').hide();
+                        toastr.clear(loadingToast);
+                        
+                        if (data.error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erreur de prédiction',
+                                text: data.error,
+                                confirmButtonColor: '#3f51b5'
+                            });
+                            return;
+                        }
+                        
+                        // Display stats
+                        const statsContainer = $('#statsContainer');
+                        statsContainer.empty();
+                        
+                        Object.keys(data).forEach(function(commCode) {
+                            const pred = data[commCode];
+                            const stats = pred.stats;
+                            const displayName = pred.displayName || 'Donnée simulée';
+                            
+                            // Carte pour la moyenne
+                            statsContainer.append(`
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <h4>Moyenne visites</h4>
+                                        <div class="value">${stats.moyenne_visites_predites.toFixed(1)}</div>
+                                        <div>${displayName}</div>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            // Carte pour le max
+                            statsContainer.append(`
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <h4>Maximum visites</h4>
+                                        <div class="value">${stats.max_visites_predites}</div>
+                                        <div>${displayName}</div>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            // Carte pour le min
+                            statsContainer.append(`
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <h4>Minimum visites</h4>
+                                        <div class="value">${stats.min_visites_predites}</div>
+                                        <div>${displayName}</div>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            // Carte pour le total
+                            statsContainer.append(`
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <h4>Total visites prédites</h4>
+                                        <div class="value">${stats.total_visites_predites}</div>
+                                        <div>${displayName}</div>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                        
+                        statsContainer.show();
+                        
+                        // Display prediction table
+                        const tableBody = $('#predictionsTable tbody');
+                        tableBody.empty();
+                        
+                        Object.keys(data).forEach(function(commCode) {
+                            const pred = data[commCode];
+                            const displayName = pred.displayName || 'Donnée simulée';
+                            
+                            for (let i = 0; i < pred.dates.length && i < 100; i++) {
+                                tableBody.append(`
+                                    <tr>
+                                        <td>${displayName}</td>
+                                        <td>${pred.dates[i]}</td>
+                                        <td>${parseFloat(pred.predictions[i]).toFixed(1)}</td>
+                                        <td>${parseFloat(pred.lower_ci[i]).toFixed(1)}</td>
+                                        <td>${parseFloat(pred.upper_ci[i]).toFixed(1)}</td>
+                                    </tr>
+                                `);
+                            }
+                        });
+                        
+                        $('#predictionsTableContainer').show();
+                        
+                        // Enable export buttons
+                        $('#exportCsvBtn').prop('disabled', false);
+                        $('#exportExcelBtn').prop('disabled', false);
+                        
+                        // Store data for export
+                        window.predictionsData = data;
+                        
+                        // Scroll to results
+                        $('html, body').animate({
+                            scrollTop: $("#statsContainer").offset().top - 20
+                        }, 500);
+                    },
+                    error: function(jqXHR) {
+                        $('#loadingPredictions').hide();
+                        toastr.clear(loadingToast);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur de serveur',
+                            text: 'Impossible de générer les prédictions: ' + jqXHR.responseText,
+                            confirmButtonColor: '#3f51b5'
+                        });
+                    }
+                });
+            },
+            error: function(jqXHR) {
+                $('#loadingPlot').hide();
+                toastr.clear(loadingToast);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur de serveur',
+                    text: 'Impossible de générer l\'analyse: ' + jqXHR.responseText,
+                    confirmButtonColor: '#3f51b5'
+                });
+            }
+        });
+    }
+                commercial = selectedCode;
+
+          if (selectedCommercials.length > 1) {
+            // Si plusieurs commerciaux sont sélectionnés, proposer de faire une comparaison
+            Swal.fire({
+                icon: 'question',
+                title: 'Comparaison de commerciaux',
+                text: 'Vous avez sélectionné plusieurs commerciaux. Voulez-vous les comparer?',
+                showCancelButton: true,
+                confirmButtonColor: '#3f51b5',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, comparer',
+                cancelButtonText: 'Non, analyser tous'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // L'utilisateur veut comparer les commerciaux sélectionnés
+                    compareSelectedCommercials();
+                    return;
+                } else {
+                    // L'utilisateur veut analyser tous les commerciaux (continuer avec le code ci-dessous)
+                    continueSingleCommercialAnalysis('', dateDebut, dateFin, days);
+                }
+            });
+            return;
+        }
+        
+        // Continuer avec l'analyse d'un seul commercial
+        continueSingleCommercialAnalysis(commercial, dateDebut, dateFin, days);
+    
+    
+    function continueSingleCommercialAnalysis(commercial, dateDebut, dateFin, days) {
+        // Réinitialiser et afficher les indicateurs de chargement
+        $('#statsContainer').hide().empty();
+        $('#plotContainer').hide();
+        $('#loadingPlot').show();
+        $('#predictionsTableContainer').hide();
+        $('#loadingPredictions').show();
+        $('#exportCsvBtn').prop('disabled', true);
+        $('#exportExcelBtn').prop('disabled', true);
+        
+        // Montrer un toast de chargement
+        const loadingToast = toastr.info('Analyse en cours...', 'Patientez', {timeOut: 0});
+        
+        // Charger le graphique d'analyse
+        $.ajax({
+            url: '/api/visits_analysis_plot',
+            type: 'GET',
+            data: {
+                commercial_code: commercial,
+                date_debut: dateDebut,
+                date_fin: dateFin
+            },
+            success: function(data) {
+                $('#loadingPlot').hide();
+                
+                if (data.error) {
+                    toastr.clear(loadingToast);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur d\'analyse',
+                        text: data.error,
+                        confirmButtonColor: '#3f51b5'
+                    });
+                    return;
+                }
+                
+                // Afficher le graphique
+                $('#analysisPlot').attr('src', 'data:image/png;base64,' + data.plot);
+                $('#plotContainer').show();
+                
+                // Charger les prédictions
+                loadPredictions(commercial, dateDebut, dateFin, days, loadingToast);
+            },
+            error: function(jqXHR) {
+                $('#loadingPlot').hide();
+                toastr.clear(loadingToast);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur de serveur',
+                    text: 'Impossible de générer l\'analyse: ' + jqXHR.responseText,
+                    confirmButtonColor: '#3f51b5'
+                });
+            }
+        });
+    }
+      function loadPredictions(commercial, dateDebut, dateFin, days, loadingToast) {
+        $.ajax({
+            url: '/api/predict_visits',
+            type: 'GET',
+            data: {
+                commercial_code: commercial,
+                date_debut: dateDebut,
+                date_fin: dateFin,
+                days_to_predict: days
+            },
+            success: function(data) {
+                $('#loadingPredictions').hide();
+                
+                if (loadingToast) {
+                    toastr.clear(loadingToast);
+                }
+                
+                if (data.error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de prédiction',
+                        text: data.error,
+                        confirmButtonColor: '#3f51b5'
+                    });
+                    return;
+                }
+                
+                // Afficher les statistiques
+                displayStats(data);
+                
+                // Afficher le tableau des prédictions
+                displayPredictionTable(data);
+                
+                // Activer les boutons d'exportation
+                $('#exportCsvBtn').prop('disabled', false);
+                $('#exportExcelBtn').prop('disabled', false);
+                
+                // Stocker les données pour l'exportation
+                window.predictionsData = data;
+                
+                // Notification de succès
+                toastr.success('Analyse et prédictions générées avec succès');
+                
+                // Scroller vers le tableau de résultats
+                $('html, body').animate({
+                    scrollTop: $("#statsContainer").offset().top - 20
+                }, 500);
+            },
+            error: function(jqXHR) {
+                $('#loadingPredictions').hide();
+                
+                if (loadingToast) {
+                    toastr.clear(loadingToast);
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur de serveur',
+                    text: 'Impossible de générer les prédictions: ' + jqXHR.responseText,
+                    confirmButtonColor: '#3f51b5'
+                });
+            }
+        });
+    }    function displayStats(data) {
+        const container = $('#statsContainer');
+        container.empty();
+        
+        Object.keys(data).forEach(function(commercial) {
+            const stats = data[commercial].stats;
+            
+            // Déterminer le nom d'affichage du commercial
+            let commercialName = `Commercial ${commercial}`;
+            
+            // Utiliser le nom du commercial si disponible dans les données
+            if (data[commercial].displayName) {
+                commercialName = data[commercial].displayName;
+            } else {
+                // Chercher le nom du commercial dans la liste des commerciaux sélectionnés
+                const selectedCommercial = selectedCommercials.find(c => c.code === commercial);
+                if (selectedCommercial) {
+                    commercialName = selectedCommercial.nom;
+                }
+            }
+            
+            // Carte pour la moyenne
+            container.append(`
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h4>Moyenne visites/jour</h4>
+                        <div class="value">${parseFloat(stats.moyenne_visites_predites).toFixed(1)}</div>
+                        <div>${commercialName}</div>
+                    </div>
+                </div>
+            `);
+            
+            // Carte pour le maximum
+            container.append(`
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h4>Maximum visites/jour</h4>
+                        <div class="value">${parseFloat(stats.max_visites_predites).toFixed(1)}</div>
+                        <div>${commercialName}</div>
+                    </div>
+                </div>
+            `);
+            
+            // Carte pour le minimum
+            container.append(`
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h4>Minimum visites/jour</h4>
+                        <div class="value">${parseFloat(stats.min_visites_predites).toFixed(1)}</div>
+                        <div>${commercialName}</div>
+                    </div>
+                </div>
+            `);
+            
+            // Carte pour le total
+            container.append(`
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h4>Total visites prédites</h4>
+                        <div class="value">${Math.round(stats.total_visites_predites)}</div>
+                        <div>${commercialName}</div>
+                    </div>
+                </div>
+            `);
+        });
+        
+        container.show();
+    }
+      function displayPredictionTable(data) {
+        const tableBody = $('#predictionsTable tbody');
+        tableBody.empty();
+        
+        // Limiter à 100 lignes pour des performances optimales
+        const maxRows = 100;
+        let rowCount = 0;
+        
+        Object.keys(data).forEach(function(commercial) {
+            const predictions = data[commercial];
+            
+            // Déterminer le nom d'affichage du commercial
+            let commercialName = `Commercial ${commercial}`;
+            
+            // Chercher le nom du commercial dans la liste des commerciaux sélectionnés
+            const selectedCommercial = selectedCommercials.find(c => c.code === commercial);
+            if (selectedCommercial) {
+                commercialName = selectedCommercial.nom;
+            }
+            
+            for (let i = 0; i < predictions.dates.length && rowCount < maxRows; i++) {
+                const pred = parseFloat(predictions.predictions[i]).toFixed(1);
+                const lower = parseFloat(predictions.lower_ci[i]).toFixed(1);
+                const upper = parseFloat(predictions.upper_ci[i]).toFixed(1);
+                
+                tableBody.append(`
+                    <tr>
+                        <td>${commercialName}</td>
+                        <td>${predictions.dates[i]}</td>
+                        <td>${pred}</td>
+                        <td>${Math.max(0, lower)}</td>
+                        <td>${upper}</td>
+                    </tr>
+                `);
+                
+                rowCount++;
+            }
+        });
+        
+        if (rowCount >= maxRows) {
+            tableBody.append(`                <tr>
+                    <td colspan="5" style="text-align: center; font-style: italic;">
+                        (Affichage limité à ${maxRows} lignes. Exportez en CSV ou Excel pour les données complètes.)
+                    </td>
+                </tr>
+            `);
+        }
+        
+        $('#predictionsTableContainer').show();
+    }    function exportPredictionsCSV() {
+        if (!window.predictionsData) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Aucune donnée disponible',
+                text: 'Veuillez d\'abord effectuer une analyse pour générer des prédictions.',
+                confirmButtonColor: '#3f51b5'
+            });
+            return;
+        }
+        
+        try {
+            // Préparer les données pour l'exportation CSV
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            csvContent += 'Commercial,Date,Visites prédites,Min (95%),Max (95%)\n';
+            
+            Object.keys(window.predictionsData).forEach(function(commercial) {
+                const predictions = window.predictionsData[commercial];
+                
+                // Déterminer le nom d'affichage du commercial
+                let commercialName = `Commercial ${commercial}`;
+                
+                // Chercher le nom du commercial dans la liste des commerciaux sélectionnés
+                const selectedCommercial = selectedCommercials.find(c => c.code === commercial);
+                if (selectedCommercial) {
+                    commercialName = selectedCommercial.nom;
+                }
+                
+                for (let i = 0; i < predictions.dates.length; i++) {
+                    const pred = parseFloat(predictions.predictions[i]).toFixed(1);
+                    const lower = Math.max(0, parseFloat(predictions.lower_ci[i]).toFixed(1));
+                    const upper = parseFloat(predictions.upper_ci[i]).toFixed(1);
+                    
+                    csvContent += `${commercialName},${predictions.dates[i]},${pred},${lower},${upper}\n`;
+                }
+            });
+            
+            // Créer un lien de téléchargement
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'predictions_visites_' + new Date().toISOString().slice(0, 10) + '.csv');
+            document.body.appendChild(link);
+            
+            // Déclencher le téléchargement
+            link.click();
+            
+            // Nettoyer
+            document.body.removeChild(link);
+            
+            // Notifier l'utilisateur du succès
+            toastr.success('Le fichier CSV a été téléchargé avec succès.');
+        } catch (error) {
+            console.error('Erreur lors de l\'exportation CSV:', error);
+            toastr.error('Une erreur est survenue lors de l\'exportation CSV.');
+        }
+    }
+      function exportPredictionsExcel() {
+        if (!window.predictionsData) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Aucune donnée disponible',
+                text: 'Veuillez d\'abord effectuer une analyse pour générer des prédictions.',
+                confirmButtonColor: '#3f51b5'
+            });
+            return;
+        }
+        
+        try {
+            // Afficher un indicateur de chargement
+            const loadingToast = toastr.info('Préparation du fichier Excel...', 'Patientez', {timeOut: 0});
+            
+            // Récupérer les paramètres actuels
+            const commercial = $('#commercialSelect').val();
+            const dateDebut = $('#dateDebut').val();
+            const dateFin = $('#dateFin').val();
+            const days = $('#predictionDays').val();
+            
+            // Construire l'URL pour télécharger le fichier Excel
+            const url = `/api/export_visits_excel?commercial_code=${commercial}&date_debut=${dateDebut}&date_fin=${dateFin}&days_to_predict=${days}`;
+            
+            // Créer un élément iframe caché pour le téléchargement
+            const downloadFrame = document.createElement('iframe');
+            downloadFrame.style.display = 'none';
+            document.body.appendChild(downloadFrame);
+            
+            // Configurer les événements pour détecter la fin du téléchargement
+            downloadFrame.onload = function() {
+                // Fermer le toast de chargement
+                toastr.clear(loadingToast);
+                
+                // Nettoyer
+                setTimeout(function() {
+                    document.body.removeChild(downloadFrame);
+                }, 2000);
+                
+                // Notifier l'utilisateur du succès
+                toastr.success('Le fichier Excel a été téléchargé avec succès.');
+            };
+            
+            // Lancer le téléchargement
+            downloadFrame.src = url;
+        } catch (error) {
+            console.error('Erreur lors de l\'exportation Excel:', error);            toastr.error('Une erreur est survenue lors de l\'exportation Excel.');
+        }
+    }
+    
+    function generateComparisonPlot(predictionsData, dateDebut, dateFin) {
+        // Créer une requête pour générer le graphique comparatif
+        $.ajax({
+            url: '/api/visits_analysis_plot',
+            type: 'GET',
+            data: {
+                date_debut: dateDebut,
+                date_fin: dateFin
+                // Ne pas envoyer de commercial_code pour obtenir tous les commerciaux
+            },
+            success: function(data) {
+                if (data.error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de génération de graphique',
+                        text: data.error,
+                        confirmButtonColor: '#3f51b5'
+                    });
+                    return;
+                }
+                
+                // Afficher le graphique
+                $('#analysisPlot').attr('src', 'data:image/png;base64,' + data.plot);
+                $('#plotContainer').show();
+            },
+            error: function(jqXHR) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur de serveur',
+                    text: 'Impossible de générer le graphique comparatif: ' + jqXHR.responseText,
+                    confirmButtonColor: '#3f51b5'
+                });
+            }
+        });
+    }
+</script>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    // Configuration de Toastr
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: "toast-top-right",
+        timeOut: 5000
+    };
+</script>
+{% endblock %}

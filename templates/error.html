@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Erreur{% endblock %}
+
+{% block page_title %}Erreur{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="text-center mb-0">Une erreur est survenue</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <p>{{ error }}</p>
+                </div>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">Retour à la page d'accueil</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard {% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Row -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card green">
+            <div class="metric-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="metric-value">1.5M</div>
+            <div class="metric-label">Daily Sales</div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-arrow-up text-success me-1"></i>
+                15% increase in today sales
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card blue">
+            <div class="metric-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <div class="metric-value">2,356</div>
+            <div class="metric-label">Email Subscriptions</div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-clock me-1"></i>
+                Last Campaign Performance
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card red">
+            <div class="metric-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="metric-value">924</div>
+            <div class="metric-label">Completed Tasks</div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-arrow-down text-danger me-1"></i>
+                Last Campaign Performance
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="metric-card purple">
+            <div class="metric-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="metric-value">49,65</div>
+            <div class="metric-label">Used Space</div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                Get more space
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Metrics Row -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card" style="padding: 1rem;">
+            <div class="d-flex align-items-center">
+                <div class="metric-icon me-3" style="font-size: 1.5rem; color: var(--warning-color);">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div>
+                    <div class="metric-value" style="font-size: 1.2rem;">49/50 GB</div>
+                    <div class="metric-label">Used Space</div>
+                </div>
+            </div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                Get More Space
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card" style="padding: 1rem;">
+            <div class="d-flex align-items-center">
+                <div class="metric-icon me-3" style="font-size: 1.5rem; color: var(--success-color);">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div>
+                    <div class="metric-value" style="font-size: 1.2rem;">$34,245</div>
+                    <div class="metric-label">Revenue</div>
+                </div>
+            </div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-calendar me-1"></i>
+                Last 24 Hours
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card" style="padding: 1rem;">
+            <div class="d-flex align-items-center">
+                <div class="metric-icon me-3" style="font-size: 1.5rem; color: var(--danger-color);">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div>
+                    <div class="metric-value" style="font-size: 1.2rem;">75</div>
+                    <div class="metric-label">Fixed Issues</div>
+                </div>
+            </div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-github me-1"></i>
+                Tracked from Github
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="metric-card" style="padding: 1rem;">
+            <div class="d-flex align-items-center">
+                <div class="metric-icon me-3" style="font-size: 1.5rem; color: var(--info-color);">
+                    <i class="fab fa-twitter"></i>
+                </div>
+                <div>
+                    <div class="metric-value" style="font-size: 1.2rem;">+245</div>
+                    <div class="metric-label">Followers</div>
+                </div>
+            </div>
+            <div class="text-muted small mt-2">
+                <i class="fas fa-refresh me-1"></i>
+                Just Updated
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Tables Row -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Employees Stats
+                </h5>
+                <p class="mb-0 text-light">New employees on 15th September, 2016</p>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Salary</th>
+                                <th>Country</th>
+                                <th>City</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Dakota Rice</td>
+                                <td>$36,738</td>
+                                <td>Niger</td>
+                                <td>Oud-Turnhout</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Minerva Hooper</td>
+                                <td>$23,789</td>
+                                <td>Curaçao</td>
+                                <td>Sinaai-Waas</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Sage Rodriguez</td>
+                                <td>$56,142</td>
+                                <td>Netherlands</td>
+                                <td>Baileux</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>Philip Chaney</td>
+                                <td>$38,735</td>
+                                <td>Korea, South</td>
+                                <td>Overland Park</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">
+                        <i class="fas fa-code me-2"></i>
+                        Tasks
+                    </h5>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-bug"></i> BUGS
+                    </button>
+                    <button class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-globe"></i> WEBSITE
+                    </button>
+                    <button class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-server"></i> SERVER
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="task-list">
+                    <div class="d-flex align-items-center mb-3">
+                        <input type="checkbox" class="form-check-input me-3" checked>
+                        <span class="text-decoration-line-through">Sign contract for "What are conference organizers afraid of?"</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <input type="checkbox" class="form-check-input me-3">
+                        <span>Lines From Great Russian Literature? Or E-mails From My Boss?</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <input type="checkbox" class="form-check-input me-3">
+                        <span>Flooded: One year later, assessing what was lost and what was found when a ravaging rain swept through metro Detroit</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <input type="checkbox" class="form-check-input me-3" checked>
+                        <span class="text-decoration-line-through">Sign contract for "What are conference organizers afraid of?"</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Cards Row -->
+<div class="row">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="metric-icon" style="color: var(--success-color);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h5 class="card-title text-light">Gestion des Clients</h5>
+                <p class="card-text text-muted">Gérez vos clients, visualisez leurs données et analysez leurs performances.</p>
+                <a href="{{ url_for('clients_list') }}" class="btn btn-success">
+                    <i class="fas fa-users me-2"></i>Voir les Clients
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="metric-icon" style="color: var(--info-color);">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h5 class="card-title text-light">Analyse des Produits</h5>
+                <p class="card-text text-muted">Analysez les performances de vos produits et prévoyez les ventes futures.</p>
+                <a href="{{ url_for('products_list') }}" class="btn btn-primary">
+                    <i class="fas fa-box me-2"></i>Voir les Produits
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="metric-icon" style="color: var(--warning-color);">
+                    <i class="fas fa-route"></i>
+                </div>
+                <h5 class="card-title text-light">Optimisation des Livraisons</h5>
+                <p class="card-text text-muted">Optimisez vos tournées de livraison avec notre algorithme intelligent.</p>
+                <a href="{{ url_for('delivery_optimization') }}" class="btn btn-warning">
+                    <i class="fas fa-route me-2"></i>Optimiser
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add active class to current navigation item
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+        
+        // If on homepage, make dashboard active
+        if (currentPath === '/' || currentPath === '/index') {
+            const dashboardLink = document.querySelector('a[href*="index"]');
+            if (dashboardLink) {
+                dashboardLink.classList.add('active');
+            }
+        }
+    });
+</script>
+{% endblock %}

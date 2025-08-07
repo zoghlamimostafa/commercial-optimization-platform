@@ -1,0 +1,373 @@
+/* Delivery Optimization Page Specific Styles - ALL WHITE TEXT */
+* {
+    color: white !important;
+}
+
+.route-card {
+    transition: all 0.3s ease;
+    color: white !important;
+}
+
+.route-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.map-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+#map {
+    height: 550px;
+    width: 100%;
+    z-index: 1;
+}
+
+.map-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    padding: 15px;
+    z-index: 2;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 300px;
+}
+
+.client-list-item {
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+.client-list-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.client-list-item.active {
+    border-left: 4px solid #3498db;
+    background-color: #e9f5ff;
+}
+
+.stats-box {
+    text-align: center;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.stats-box h3 {
+    font-size: 2rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.stats-box p {
+    margin: 5px 0 0;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.route-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.badge-custom {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e9f5ff;
+    color: #3498db;
+}
+
+.product-quantity {
+    display: inline-block;
+    min-width: 45px;
+    text-align: center;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 4px;
+    background-color: #e9f5ff;
+    color: #3498db;
+}
+
+.progress {
+    height: 8px;
+    margin-top: 5px;
+    border-radius: 4px;
+}
+
+.list-group-numbered li::before {
+    background-color: #3498db;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.packing-list-container,
+.sarima-container,
+.route-details-container {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #3498db #f8f9fa;
+}
+
+.packing-list-container::-webkit-scrollbar,
+.sarima-container::-webkit-scrollbar,
+.route-details-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.packing-list-container::-webkit-scrollbar-track,
+.sarima-container::-webkit-scrollbar-track,
+.route-details-container::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.packing-list-container::-webkit-scrollbar-thumb,
+.sarima-container::-webkit-scrollbar-thumb,
+.route-details-container::-webkit-scrollbar-thumb {
+    background-color: #3498db;
+    border-radius: 10px;
+}
+
+.delivery-summary {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.delivery-summary h5 {
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.sarima-container,
+.route-details-container {
+    position: relative;
+}
+
+.load-more-button {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 20%, rgba(255,255,255,1) 100%);
+    padding: 30px 0 10px;
+    text-align: center;
+    z-index: 10;
+    /* Make sure the button is always visible */
+    display: block !important;
+}
+
+/* Fix for buttons to make them more noticeable */
+.load-more-button .btn {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.load-more-button .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.animated-route-line {
+    animation: dash 2s linear forwards;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.btn-optimize {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-optimize:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #1c6ca1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+}
+
+.weather-info {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-top: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.weather-info i {
+    font-size: 2rem;
+    margin-right: 15px;
+    color: #f39c12;
+}
+
+.weather-details span {
+    display: block;
+    line-height: 1.4;
+}
+
+.weather-details .temp {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Loading animation */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255,255,255,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    border-radius: 12px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0,0,0,0.1);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Custom map markers */
+.custom-div-icon {
+    background: none;
+    border: none;
+}
+
+.marker-pin {
+    width: 30px;
+    height: 30px;
+    border-radius: 50% 50% 50% 0;
+    background: #007bff;
+    position: absolute;
+    transform: rotate(-45deg);
+    left: 50%;
+    top: 50%;
+    margin: -15px 0 0 -15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.marker-pin::after {
+    content: '';
+    width: 22px;
+    height: 22px;
+    margin: 4px 0 0 4px;
+    background: #fff;
+    position: absolute;
+    border-radius: 50%;
+}
+
+.marker-pin span {
+    transform: rotate(45deg);
+    display: block;
+    z-index: 2;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    color: #007bff;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Popup styles */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+    padding: 0;
+}
+
+.leaflet-popup-content {
+    margin: 0;
+    width: 250px !important;
+}
+
+.popup-content {
+    padding: 15px;
+}
+
+.popup-content h6 {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #3498db;
+}
+
+.popup-content p {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.popup-content ul {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.leaflet-popup-tip {
+    background: white;
+}
+
+/* Print-friendly styles */
+@media print {
+    .card {
+        break-inside: avoid;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+}

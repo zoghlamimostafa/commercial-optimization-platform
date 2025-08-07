@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>365-Day Delivery Prediction - Advanced Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        .prediction-card {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .prediction-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .commercial-selector {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .insight-badge {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 5px;
+            display: inline-block;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results-section {
+            display: none;
+        }
+        
+        .monthly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .month-card {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: black;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        /* Force black text in white background areas */
+        .prediction-card.bg-white,
+        .prediction-card.bg-white *,
+        .bg-white h4,
+        .bg-white p,
+        .bg-white div {
+            color: black !important;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center text-white">
+            <div class="spinner mx-auto mb-3"></div>
+            <h4>Generating 365-Day Predictions...</h4>
+            <p>Analyzing historical patterns and optimizing delivery schedules</p>
+        </div>
+    </div>
+
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-5 fw-bold text-white">
+                            <i class="fas fa-calendar-alt me-3"></i>365-Day Delivery Prediction
+                        </h1>
+                        <p class="lead text-white">Advanced dual optimization for delivery visits and revenue</p>
+                    </div>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Selection -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">
+                            <i class="fas fa-calendar-alt me-2"></i>Date Selection
+                        </h4>
+                        <div class="row align-items-end">
+                            <div class="col-md-6">
+                                <label for="referenceDate" class="form-label">
+                                    <strong>Reference Date for Prediction</strong>
+                                </label>
+                                <input type="date" id="referenceDate" class="form-control form-control-lg" 
+                                       value="{{ 'today' if not selected_date else selected_date }}">
+                                <small class="text-white">
+                                    Training: 365 days BEFORE this date | Prediction: 365 days AFTER this date
+                                </small>
+                            </div>
+                            <div class="col-md-3">
+                                <button id="loadCommercialsBtn" class="btn btn-light btn-lg w-100">
+                                    <i class="fas fa-sync-alt me-2"></i>Load Commercials
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button id="setTodayBtn" class="btn btn-outline-light btn-lg w-100">
+                                    <i class="fas fa-calendar-day me-2"></i>Use Today
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Date Info Display -->
+                        <div id="dateInfo" class="mt-3 p-3 bg-white bg-opacity-25 rounded">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="fw-bold">Training Period</div>
+                                    <div id="trainingPeriod">-</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="fw-bold">Reference Date</div>
+                                    <div id="referenceDateDisplay">-</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="fw-bold">Prediction Period</div>
+                                    <div id="predictionPeriod">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commercial Selection -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="commercial-selector">
+                    <h3 class="mb-3"><i class="fas fa-user-tie me-2"></i>Select Commercial</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <select id="commercialSelect" class="form-select form-select-lg">
+                                <option value="">Choose a commercial...</option>
+                                {% for commercial in commercials %}
+                                <option value="{{ commercial.commercial_code }}" 
+                                        data-records="{{ commercial.total_records }}"
+                                        data-clients="{{ commercial.unique_clients }}"
+                                        data-first="{{ commercial.first_record }}"
+                                        data-last="{{ commercial.last_record }}"
+                                        data-avg-value="{{ commercial.avg_transaction_value }}">
+                                    Commercial {{ commercial.commercial_code }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="revenueOptimization" checked>
+                                <label class="form-check-label text-white" for="revenueOptimization">
+                                    <strong>Revenue Optimization</strong>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button id="analyzeBtn" class="btn btn-warning btn-lg w-100" disabled>
+                                <i class="fas fa-analytics me-2"></i>Generate 365-Day Plan
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Commercial Info -->
+                    <div id="commercialInfo" class="mt-3" style="display: none;">
+                        <div class="row text-center">
+                            <div class="col-md-2">
+                                <div class="fw-bold">Total Records</div>
+                                <div id="totalRecords">-</div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="fw-bold">Unique Clients</div>
+                                <div id="uniqueClients">-</div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="fw-bold">First Record</div>
+                                <div id="firstRecord">-</div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="fw-bold">Last Record</div>
+                                <div id="lastRecord">-</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="fw-bold">Avg Transaction Value</div>
+                                <div id="avgValue">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <!-- Summary Metrics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <i class="fas fa-truck fa-2x mb-2"></i>
+                        <h3 id="totalVisits">-</h3>
+                        <p class="mb-0">Total Visits (365 days)</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                        <h3 id="totalRevenue">-</h3>
+                        <p class="mb-0">Total Revenue (365 days)</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <i class="fas fa-chart-line fa-2x mb-2"></i>
+                        <h3 id="avgDailyVisits">-</h3>
+                        <p class="mb-0">Avg Daily Visits</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <i class="fas fa-star fa-2x mb-2"></i>
+                        <h3 id="modelQuality">-</h3>
+                        <p class="mb-0">Model Quality Score</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Insights -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="prediction-card p-4 bg-white text-dark">
+                        <h4 class="mb-3 text-dark"><i class="fas fa-lightbulb me-2 text-warning"></i>Key Insights</h4>
+                        <div id="insightsContainer" class="text-dark">
+                            <!-- Insights will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h5><i class="fas fa-chart-area me-2"></i>Daily Visits Forecast (365 days)</h5>
+                        <canvas id="visitsChart" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h5><i class="fas fa-chart-line me-2"></i>Daily Revenue Forecast (365 days)</h5>
+                        <canvas id="revenueChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Summary -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="prediction-card p-4 bg-white text-dark">
+                        <h4 class="mb-3 text-dark"><i class="fas fa-calendar me-2"></i>Monthly Breakdown</h4>
+                        <div id="monthlyGrid" class="monthly-grid text-dark">
+                            <!-- Monthly cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Patterns -->
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h5><i class="fas fa-calendar-week me-2"></i>Weekly Visit Patterns</h5>
+                        <canvas id="weeklyVisitsChart" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <h5><i class="fas fa-coins me-2"></i>Weekly Revenue Patterns</h5>
+                        <canvas id="weeklyRevenueChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Daily Plan -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="prediction-card p-4 bg-white text-dark">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="text-dark"><i class="fas fa-table me-2"></i>Daily Plan Preview (First 30 Days)</h4>
+                            <button id="downloadBtn" class="btn btn-success">
+                                <i class="fas fa-download me-2"></i>Download Full Report (Excel)
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="dailyPlanTable" class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Day of Week</th>
+                                        <th>Predicted Visits</th>
+                                        <th>Predicted Revenue</th>
+                                        <th>Visit Confidence</th>
+                                        <th>Revenue Confidence</th>
+                                        <th>Optimization Applied</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Daily plan data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentResults = null;
+        let chartsInitialized = false;
+        let selectedReferenceDate = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today as default date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('referenceDate').value = today;
+            updateDateInfo();
+            
+            // Load commercials for today
+            loadCommercialsForDate();
+        });
+
+        // Date selection handling
+        document.getElementById('referenceDate').addEventListener('change', function() {
+            updateDateInfo();
+        });
+
+        document.getElementById('setTodayBtn').addEventListener('click', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('referenceDate').value = today;
+            updateDateInfo();
+            loadCommercialsForDate();
+        });
+
+        document.getElementById('loadCommercialsBtn').addEventListener('click', function() {
+            loadCommercialsForDate();
+        });
+
+        function updateDateInfo() {
+            const selectedDate = document.getElementById('referenceDate').value;
+            if (!selectedDate) return;
+
+            selectedReferenceDate = selectedDate;
+            
+            const date = new Date(selectedDate);
+            const trainingStart = new Date(date);
+            trainingStart.setDate(trainingStart.getDate() - 365);
+            
+            const predictionEnd = new Date(date);
+            predictionEnd.setDate(predictionEnd.getDate() + 365);
+
+            document.getElementById('referenceDateDisplay').textContent = date.toLocaleDateString();
+            document.getElementById('trainingPeriod').textContent = 
+                trainingStart.toLocaleDateString() + ' to ' + date.toLocaleDateString();
+            document.getElementById('predictionPeriod').textContent = 
+                date.toLocaleDateString() + ' to ' + predictionEnd.toLocaleDateString();
+        }
+
+        function loadCommercialsForDate() {
+            const referenceDate = document.getElementById('referenceDate').value;
+            const commercialSelect = document.getElementById('commercialSelect');
+            
+            if (!referenceDate) {
+                alert('Please select a reference date first.');
+                return;
+            }
+
+            // Show loading
+            commercialSelect.innerHTML = '<option value="">Loading commercials...</option>';
+            commercialSelect.disabled = true;
+
+            // Fetch commercials for the selected date
+            const url = `/api/365_prediction/commercials?reference_date=${referenceDate}`;
+            
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear and populate commercials
+                    commercialSelect.innerHTML = '<option value="">Choose a commercial...</option>';
+                    
+                    data.commercials.forEach(commercial => {
+                        const option = document.createElement('option');
+                        option.value = commercial.commercial_code;
+                        option.textContent = `Commercial ${commercial.commercial_code}`;
+                        option.dataset.records = commercial.total_records;
+                        option.dataset.clients = commercial.unique_clients;
+                        option.dataset.first = commercial.first_record;
+                        option.dataset.last = commercial.last_record;
+                        option.dataset.avgValue = commercial.avg_transaction_value;
+                        
+                        if (commercial.training_period_records) {
+                            option.dataset.trainingRecords = commercial.training_period_records;
+                        }
+                        
+                        commercialSelect.appendChild(option);
+                    });
+                    
+                    commercialSelect.disabled = false;
+                    
+                    // Show status
+                    if (data.commercials.length === 0) {
+                        alert('No commercials found with sufficient data for the selected training period.');
+                    } else {
+                        console.log(`Loaded ${data.commercials.length} commercials for ${referenceDate}`);
+                    }
+                } else {
+                    alert('Error loading commercials: ' + data.error);
+                    commercialSelect.innerHTML = '<option value="">Error loading commercials</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load commercials');
+                commercialSelect.innerHTML = '<option value="">Error loading commercials</option>';
+            });
+        }
+
+        // Commercial selection handling
+        document.getElementById('commercialSelect').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const commercialInfo = document.getElementById('commercialInfo');
+
+            if (this.value) {
+                // Enable analyze button
+                analyzeBtn.disabled = false;
+                
+                // Show commercial info
+                document.getElementById('totalRecords').textContent = selectedOption.dataset.records;
+                document.getElementById('uniqueClients').textContent = selectedOption.dataset.clients;
+                document.getElementById('firstRecord').textContent = selectedOption.dataset.first;
+                document.getElementById('lastRecord').textContent = selectedOption.dataset.last;
+                document.getElementById('avgValue').textContent = parseFloat(selectedOption.dataset.avgValue).toFixed(2) + ' TND';
+                commercialInfo.style.display = 'block';
+            } else {
+                analyzeBtn.disabled = true;
+                commercialInfo.style.display = 'none';
+            }
+        });
+
+        // Analyze button click
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
+            const commercialCode = document.getElementById('commercialSelect').value;
+            const includeRevenue = document.getElementById('revenueOptimization').checked;
+
+            if (!commercialCode) {
+                alert('Please select a commercial first.');
+                return;
+            }
+
+            runAnalysis(commercialCode, includeRevenue);
+        });
+
+        // Download button click
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const commercialCode = document.getElementById('commercialSelect').value;
+            const includeRevenue = document.getElementById('revenueOptimization').checked;
+
+            if (!commercialCode) {
+                alert('Please run an analysis first.');
+                return;
+            }
+
+            downloadReport(commercialCode, includeRevenue);
+        });
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function runAnalysis(commercialCode, includeRevenue) {
+            if (!selectedReferenceDate) {
+                alert('Please select a reference date first.');
+                return;
+            }
+            
+            showLoading();
+            
+            fetch('/api/365_prediction/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    commercial_code: commercialCode,
+                    selected_date: selectedReferenceDate,  // Include the selected date
+                    include_revenue_optimization: includeRevenue
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                
+                if (data.success) {
+                    currentResults = data;
+                    displayResults(data);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+                alert('Analysis failed: ' + error.message);
+            });
+        }
+
+        function displayResults(data) {
+            // Show results section
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Update summary metrics
+            document.getElementById('totalVisits').textContent = data.summary.total_predicted_visits.toLocaleString();
+            document.getElementById('totalRevenue').textContent = Number(data.summary.total_predicted_revenue).toFixed(0) + ' TND';
+            document.getElementById('avgDailyVisits').textContent = data.summary.avg_daily_visits.toFixed(1);
+            document.getElementById('modelQuality').textContent = data.model_performance.visits_model_quality.toFixed(1) + '/100';
+
+            // Display insights
+            displayInsights(data.insights);
+            
+            // Display monthly breakdown
+            displayMonthlyBreakdown(data.monthly_summary);
+            
+            // Display daily plan table
+            displayDailyPlan(data.sample_daily_plan);
+            
+            // Load and display charts
+            loadChartData(data.commercial_code);
+        }
+
+        function displayInsights(insights) {
+            const container = document.getElementById('insightsContainer');
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="insight-badge">
+                            <i class="fas fa-trophy me-2"></i>Best Month: ${insights.best_month}
+                        </div>
+                        <div class="insight-badge">
+                            <i class="fas fa-chart-line me-2"></i>Best Day: ${insights.best_day_of_week}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="insight-badge">
+                            <i class="fas fa-arrow-down me-2"></i>Lowest Month: ${insights.worst_month}
+                        </div>
+                        <div class="insight-badge">
+                            <i class="fas fa-calendar-minus me-2"></i>Lowest Day: ${insights.worst_day_of_week}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayMonthlyBreakdown(monthlyData) {
+            const grid = document.getElementById('monthlyGrid');
+            grid.innerHTML = '';
+            
+            monthlyData.forEach(month => {
+                const monthCard = document.createElement('div');
+                monthCard.className = 'month-card';
+                monthCard.innerHTML = `
+                    <h6>${month.month}</h6>
+                    <div><strong>${month.total_visits}</strong> visits</div>
+                    <div><strong>${Number(month.total_revenue).toFixed(0)}</strong> TND</div>
+                    <small>Avg: ${month.avg_daily_visits.toFixed(1)} visits/day</small>
+                `;
+                grid.appendChild(monthCard);
+            });
+        }
+
+        function displayDailyPlan(dailyPlan) {
+            const tbody = document.querySelector('#dailyPlanTable tbody');
+            tbody.innerHTML = '';
+            
+            dailyPlan.forEach(day => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${day.date}</td>
+                    <td>${day.day_of_week}</td>
+                    <td><span class="badge bg-primary">${day.predicted_visits}</span></td>
+                    <td><span class="badge bg-success">${day.predicted_revenue.toFixed(0)} TND</span></td>
+                    <td><small>${day.visits_lower_ci} - ${day.visits_upper_ci}</small></td>
+                    <td><small>${day.revenue_lower_ci.toFixed(0)} - ${day.revenue_upper_ci.toFixed(0)} TND</small></td>
+                    <td><span class="badge bg-${day.revenue_optimization_applied ? 'success' : 'secondary'}">${day.revenue_optimization_applied ? 'Yes' : 'No'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadChartData(commercialCode) {
+            const url = selectedReferenceDate 
+                ? `/api/365_prediction/chart_data/${commercialCode}?selected_date=${selectedReferenceDate}`
+                : `/api/365_prediction/chart_data/${commercialCode}`;
+                
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        createCharts(data.chart_data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading chart data:', error);
+                });
+        }
+
+        function createCharts(chartData) {
+            // Daily visits chart
+            const visitsCtx = document.getElementById('visitsChart').getContext('2d');
+            new Chart(visitsCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.daily_visits.dates,
+                    datasets: [{
+                        label: 'Predicted Visits',
+                        data: chartData.daily_visits.visits,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: false // Hide x-axis labels for 365 days
+                        }
+                    }
+                }
+            });
+
+            // Daily revenue chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.daily_revenue.dates,
+                    datasets: [{
+                        label: 'Predicted Revenue (TND)',
+                        data: chartData.daily_revenue.revenue,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: false // Hide x-axis labels for 365 days
+                        }
+                    }
+                }
+            });
+
+            // Weekly visits pattern
+            const weeklyVisitsCtx = document.getElementById('weeklyVisitsChart').getContext('2d');
+            new Chart(weeklyVisitsCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.weekly_patterns.map(w => w.day),
+                    datasets: [{
+                        label: 'Average Visits',
+                        data: chartData.weekly_patterns.map(w => w.avg_visits),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Weekly revenue pattern
+            const weeklyRevenueCtx = document.getElementById('weeklyRevenueChart').getContext('2d');
+            new Chart(weeklyRevenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.weekly_patterns.map(w => w.day),
+                    datasets: [{
+                        label: 'Average Revenue (TND)',
+                        data: chartData.weekly_patterns.map(w => w.avg_revenue),
+                        backgroundColor: 'rgba(255, 206, 86, 0.5)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function downloadReport(commercialCode, includeRevenue) {
+            if (!selectedReferenceDate) {
+                alert('Please select a reference date first.');
+                return;
+            }
+            
+            showLoading();
+            
+            fetch('/api/365_prediction/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    commercial_code: commercialCode,
+                    selected_date: selectedReferenceDate,  // Include the selected date
+                    include_revenue_optimization: includeRevenue
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                hideLoading();
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `365_day_prediction_${commercialCode}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Download error:', error);
+                alert('Download failed: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

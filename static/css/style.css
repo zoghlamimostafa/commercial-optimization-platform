@@ -1,0 +1,94 @@
+/* Custom styling for the dashboard - SMART TEXT COLORS */
+* {
+    color: white !important;
+}
+
+/* Black text for white/light backgrounds */
+.bg-white, .bg-light, .bg-warning, .bg-info, .bg-success, .bg-primary,
+.card-body, .modal-body, .table, .form-control, .btn-light, .btn-white,
+.alert, .list-group-item, .dropdown-menu, .navbar-light, 
+.table td, .table th, .card .card-body {
+    color: black !important;
+}
+
+/* White text for dark backgrounds */
+.bg-dark, .bg-secondary, .navbar-dark, .btn-dark, .btn-primary, .btn-secondary {
+    color: white !important;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: white !important;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 500;
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    background-color: #e9ecef;
+}
+
+/* Custom styling for data tables */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #0d6efd !important;
+    color: white !important;
+    border: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #0a58ca !important;
+    color: white !important;
+    border: none !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 5px 10px;
+}
+
+/* Dashboard cards */
+.stats-card {
+    transition: transform 0.3s;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+/* List group styling */
+.list-group-item-action:hover {
+    background-color: #e9f5ff;
+}
+
+/* Image styling */
+.card-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+/* Footer styling */
+footer {
+    border-top: 1px solid #e9ecef;
+}

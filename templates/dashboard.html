@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Client {{ client_name }} ({{ client_code }}){% endblock %}
+
+{% block page_title %}Dashboard - {{ client_name }}{% endblock %}
+
+{% block extra_css %}
+            margin: 0;
+            font-weight: 600;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table th {
+            background-color: #f1f2f6;
+            border-top: none;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 123, 255, 0.03);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: none;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1c6ca1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(52, 152, 219, 0.4);
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #dde1e3;
+            padding: 8px 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03) inset;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+        }
+        .product-code {
+            cursor: help;
+            text-decoration: underline dotted;
+            color: #0d6efd;
+            font-weight: 500;
+        }
+        .tippy-box {
+            background-color: #fff;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            max-width: 300px !important;
+        }
+        .product-tooltip {
+            text-align: left;
+        }
+        .product-tooltip h5 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            color: #3498db;
+        }
+        .product-tooltip p {
+            margin-bottom: 8px;
+        }
+        .tooltip-label {
+            font-weight: 600;
+            display: inline-block;
+            width: 80px;
+            color: #2c3e50;
+        }
+        .product-thumbnail {
+            border-radius: 6px;
+            border: 1px solid #eaeaea;
+            padding: 3px;
+            background-color: white;
+            transition: transform 0.2s ease;
+        }
+        .product-thumbnail:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(to bottom, #3498db 0%, #2980b9 100%);
+            color: white !important;
+            border: none;
+            border-radius: 4px;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:not(.current):hover {
+            background: #f0f0f0;
+            color: #3498db !important;
+            border: 1px solid #ddd;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: none;
+            width: 45px;
+            height: 45px;
+            line-height: 45px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            text-align: center;
+            font-size: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .back-to-top:hover {
+            background: #2980b9;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+        footer {
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .footer-actions a {
+            color: #6c757d;
+            margin: 0 10px;
+            transition: color 0.2s ease;
+        }
+        .footer-actions a:hover {
+            color: #3498db;
+            text-decoration: none;
+        }
+    </style>{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Accueil</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('clients_list') }}">Clients</a></li>
+                        <li class="breadcrumb-item active">{{ client_name }}</li>
+                    </ol>
+                </nav>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2><i class="fas fa-user-circle me-2"></i>{{ client_name }}</h2>
+                            <span class="badge bg-light text-dark fs-6">Code: {{ client_code }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vue d'ensemble -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-shopping-cart me-2"></i>Panier Moyen</h5>
+                            <span class="badge bg-light text-dark">{{ date_debut }} à {{ date_fin }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <div class="display-4 text-primary">{{ basket_info.panier_moyen|round(2) }}</div>
+                            <p class="text-muted">Basé sur {{ basket_info.nombre_factures }} factures</p>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h6>Chiffre d'affaires</h6>
+                                <p class="fs-5 text-primary fw-bold">{{ basket_info.chiffre_affaire_total|round(2) }}</p>
+                            </div>
+                            <div class="col-6">
+                                <h6>Factures</h6>
+                                <p class="fs-5 text-secondary fw-bold">{{ basket_info.nombre_factures }}</p>
+                            </div>
+                        </div>
+                        <form class="mt-4" method="GET">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="date_debut" class="form-label">Du:</label>
+                                    <input type="date" class="form-control" id="date_debut" name="date_debut" value="{{ date_debut }}">
+                                </div>
+                                <div class="col-6">
+                                    <label for="date_fin" class="form-label">Au:</label>
+                                    <input type="date" class="form-control" id="date_fin" name="date_fin" value="{{ date_fin }}">
+                                </div>
+                            </div>
+                            <div class="d-grid mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-sync-alt me-1"></i>Mettre à jour
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-crown me-2"></i>Top 5 des produits les plus vendus</h5>
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ products_plot }}" class="img-fluid" alt="Top 5 Products">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prévisions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-chart-line me-2"></i>Prévisions (2025-2026)</h5>
+                            <button class="btn btn-sm btn-light" id="downloadForecastBtn">
+                                <i class="fas fa-download me-1"></i>Télécharger
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ forecast_plot }}" class="img-fluid" alt="Forecast Plot">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Composants de la prévision -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-puzzle-piece me-2"></i>Composantes de la prévision</h5>
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ components_plot }}" class="img-fluid" alt="Components Plot">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="detailsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="forecast-tab" data-bs-toggle="tab" data-bs-target="#forecast" type="button" role="tab">
+                    <i class="fas fa-table me-1"></i>Détails des prévisions
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">
+                    <i class="fas fa-box me-1"></i>Produits les plus vendus
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="detailsTabContent">
+            <!-- Tableau des prévisions -->
+            <div class="tab-pane fade show active" id="forecast" role="tabpanel" aria-labelledby="forecast-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-calendar-alt me-2"></i>Détails des prévisions mensuelles</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="forecastTable" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Prévision</th>
+                                        <th>Limite inférieure</th>
+                                        <th>Limite supérieure</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in forecast_data %}
+                                    <tr>
+                                        <td>{{ row.Date }}</td>
+                                        <td>{{ row.Prévision|round(2) }}</td>
+                                        <td>{{ row['Limite inférieure']|round(2) }}</td>
+                                        <td>{{ row['Limite supérieure']|round(2) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableau des produits -->
+            <div class="tab-pane fade" id="products" role="tabpanel" aria-labelledby="products-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-star me-2"></i>Détails des produits les plus vendus</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="productsTable" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Code Produit</th>
+                                        <th>Nom Produit</th>
+                                        <th>Ventes Totales</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in products_data %}
+                                    <tr>
+                                        <td class="text-center"><img src="{{ url_for('product_image', product_code=row.produit_code) }}" alt="{{ row.produit_nom }}" class="product-thumbnail" style="max-height: 60px; max-width: 60px;"></td>
+                                        <td><span class="product-code" data-product-code="{{ row.produit_code }}">{{ row.produit_code }}</span></td>
+                                        <td>{{ row.produit_nom if row.produit_nom else "Non spécifié" }}</td>
+                                        <td>{{ row.total_ventes|round(2) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+      <!-- Back to top button -->
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<script>
+        $(document).ready(function () {
+            // Initialize DataTables
+            $('#forecastTable').DataTable({
+                "pageLength": 10,
+                "order": [[0, "asc"]],
+                "language": {
+                    "lengthMenu": "Afficher _MENU_ entrées par page",
+                    "zeroRecords": "Aucun résultat trouvé",
+                    "info": "Page _PAGE_ sur _PAGES_",
+                    "infoEmpty": "Pas de données disponibles",
+                    "infoFiltered": "(filtré depuis _MAX_ entrées totales)",
+                    "search": "Rechercher:",
+                    "paginate": {
+                        "first": "Premier",
+                        "last": "Dernier",
+                        "next": "Suivant",
+                        "previous": "Précédent"
+                    }
+                }
+            });
+            
+            $('#productsTable').DataTable({
+                "pageLength": 5,
+                "order": [[3, "desc"]],
+                "language": {
+                    "lengthMenu": "Afficher _MENU_ entrées par page",
+                    "zeroRecords": "Aucun résultat trouvé",
+                    "info": "Page _PAGE_ sur _PAGES_",
+                    "infoEmpty": "Pas de données disponibles",
+                    "infoFiltered": "(filtré depuis _MAX_ entrées totales)",
+                    "search": "Rechercher:",
+                    "paginate": {
+                        "first": "Premier",
+                        "last": "Dernier",
+                        "next": "Suivant",
+                        "previous": "Précédent"
+                    }
+                },
+                "initComplete": function() {
+                    initProductTooltips();
+                }
+            });
+            
+            // Function to initialize product tooltips
+            function initProductTooltips() {
+                $('.product-code').each(function() {
+                    const productCode = $(this).data('product-code');
+                    
+                    tippy(this, {
+                        content: 'Chargement...',
+                        allowHTML: true,
+                        interactive: true,
+                        delay: [200, 0],
+                        placement: 'right',
+                        theme: 'light',
+                        appendTo: document.body,
+                        onShow(instance) {
+                            if (instance.props.content === 'Chargement...') {
+                                $.ajax({
+                                    url: '/get_product_details',
+                                    method: 'GET',
+                                    data: { code: productCode },
+                                    success: function(data) {
+                                        const tooltipContent = `
+                                            <div class="product-tooltip">
+                                                <h5>${data.libelle}</h5>
+                                                <p><span class="tooltip-label">Code:</span> ${data.code}</p>
+                                                <p><span class="tooltip-label">Prix:</span> ${data.prix.toFixed(2)}</p>
+                                                <p><span class="tooltip-label">Famille:</span> ${data.famille}</p>
+                                                <p><span class="tooltip-label">Description:</span></p>
+                                                <p>${data.description}</p>
+                                            </div>
+                                        `;
+                                        instance.setContent(tooltipContent);
+                                    },
+                                    error: function() {
+                                        instance.setContent('Erreur de chargement des détails du produit');
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Initialize tooltips on page load (for initial data)
+            initProductTooltips();
+            
+            // Re-initialize tooltips when the table is redrawn (after search or pagination)
+            $('#productsTable').on('draw.dt', function() {
+                initProductTooltips();
+            });
+            
+            // Back to top button functionality
+            $(window).scroll(function() {
+                if ($(this).scrollTop() > 300) {
+                    $('.back-to-top').fadeIn('slow');
+                } else {
+                    $('.back-to-top').fadeOut('slow');
+                }
+            });
+            
+            $('.back-to-top').click(function() {
+                $('html, body').animate({scrollTop : 0}, 500);
+                return false;
+            });
+            
+            // Download forecast button
+            $('#downloadForecastBtn').click(function() {
+                window.location.href = "{{ url_for('download_forecast', client_code=client_code) }}";
+            });
+            
+            // Share dashboard button
+            $('#shareDashboardBtn').click(function(e) {
+                e.preventDefault();
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Dashboard Client {{ client_name }}',
+                        text: 'Consultez les prévisions pour {{ client_name }}',
+                        url: window.location.href,
+                    })
+                    .catch(() => {
+                        alert('Le partage n\'est pas disponible sur ce navigateur');
+                    });
+                } else {
+                    // Fallback - copy to clipboard
+                    const dummy = document.createElement('input');
+                    document.body.appendChild(dummy);
+                    dummy.value = window.location.href;
+                    dummy.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(dummy);
+                    alert('Lien copié dans le presse-papiers');                }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,688 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Tableau de Bord - Chiffre d'Affaires et Prédictions
+                    </h4>
+                    <p class="mb-0">Gérez vos objectifs de revenus et visualisez vos prédictions de livraison</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Configuration Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        Configuration du Chiffre d'Affaires
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="revenueConfigForm">
+                        <div class="mb-3">
+                            <label for="commercial" class="form-label">Commercial</label>
+                            <select class="form-select" id="commercial" required>
+                                <option value="">Sélectionner un commercial</option>
+                                {% for code, name in commercials %}
+                                <option value="{{ code }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="minRevenueTarget" class="form-label">Objectif Minimum Quotidien (TND)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">TND</span>
+                                <input type="number" class="form-control" id="minRevenueTarget" 
+                                       placeholder="Ex: 1500" min="0" step="0.01">
+                                <span class="input-group-text">/jour</span>
+                            </div>
+                            <div class="form-text">Définissez votre objectif de chiffre d'affaires minimum par jour</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="forecastDays" class="form-label">Période de Prévision (jours)</label>
+                            <select class="form-select" id="forecastDays">
+                                <option value="7">7 jours (1 semaine)</option>
+                                <option value="14">14 jours (2 semaines)</option>
+                                <option value="30">30 jours (1 mois)</option>
+                                <option value="60">60 jours (2 mois)</option>
+                                <option value="90">90 jours (3 mois)</option>
+                                <option value="180">180 jours (6 mois)</option>
+                                <option value="365" selected>365 jours (1 an)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Générer les Prédictions
+                            </button>
+                            <button type="button" class="btn btn-outline-info" id="analyzeHistorical">
+                                <i class="fas fa-history me-2"></i>
+                                Analyser l'Historique
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Guide d'Utilisation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Comment utiliser ce tableau de bord:</h6>
+                        <ol class="mb-0">
+                            <li><strong>Sélectionnez votre commercial</strong> dans la liste</li>
+                            <li><strong>Définissez votre objectif</strong> de chiffre d'affaires minimum</li>
+                            <li><strong>Choisissez la période</strong> de prévision souhaitée</li>
+                            <li><strong>Générez les prédictions</strong> pour voir les résultats</li>
+                            <li><strong>Consultez la carte</strong> des livraisons optimisées</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6><i class="fas fa-star me-2"></i>Fonctionnalités:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Prédictions SARIMA avancées</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Contraintes de revenus automatiques</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Recommandations personnalisées</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Carte interactive des livraisons</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Analyse historique des performances</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection" style="display: none;">
+        <!-- Revenue Prediction Results -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Résultats des Prédictions de Revenus
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="revenuePredictionResults">
+                            <!-- Results will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tools me-2"></i>
+                            Actions Rapides
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" id="optimizeDeliveryBtn" disabled>
+                                <i class="fas fa-route me-2"></i>
+                                Optimiser les Livraisons pour Demain
+                            </button>
+                            <button class="btn btn-info" id="viewPredictionMapBtn" disabled>
+                                <i class="fas fa-map-marked-alt me-2"></i>
+                                Voir la Carte des Prédictions
+                            </button>
+                            <button class="btn btn-warning" id="adjustTargetsBtn" disabled>
+                                <i class="fas fa-adjust me-2"></i>
+                                Ajuster les Objectifs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Statistiques Rapides
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="quickStats">
+                            <!-- Quick statistics will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prediction Map -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-map me-2"></i>
+                            Carte des Prédictions de Livraison
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="predictionMap" style="height: 500px; display: none;">
+                            <!-- Map will be inserted here -->
+                        </div>
+                        <div id="mapPlaceholder" class="text-center p-5 bg-light">
+                            <i class="fas fa-map fa-3x text-white mb-3"></i>
+                            <p class="text-white">Générez des prédictions pour voir la carte des livraisons optimisées</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historical Analysis Modal -->
+    <div class="modal fade" id="historicalAnalysisModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Analyse Historique des Revenus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="historicalAnalysisContent">
+                        <!-- Historical analysis content will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let currentCommercial = null;
+let currentPredictionData = null;
+let predictionMap = null;
+
+document.getElementById('revenueConfigForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const commercial = document.getElementById('commercial').value;
+    const minRevenueTarget = document.getElementById('minRevenueTarget').value;
+    const forecastDays = document.getElementById('forecastDays').value;
+    
+    if (!commercial) {
+        alert('Veuillez sélectionner un commercial');
+        return;
+    }
+    
+    currentCommercial = commercial;
+    
+    // Show loading
+    showLoading('Génération des prédictions en cours...');
+    
+    try {
+        const response = await fetch('/api/revenue/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                commercial_code: commercial,
+                forecast_days: parseInt(forecastDays),
+                min_revenue: parseFloat(minRevenueTarget) || 0
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            currentPredictionData = data;
+            displayPredictionResults(data);
+            enableQuickActions();
+        } else {
+            alert('Erreur: ' + (data.error || 'Impossible de générer les prédictions'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Une erreur est survenue lors de la génération des prédictions');
+    } finally {
+        hideLoading();
+    }
+});
+
+document.getElementById('analyzeHistorical').addEventListener('click', async function() {
+    const commercial = document.getElementById('commercial').value;
+    
+    if (!commercial) {
+        alert('Veuillez sélectionner un commercial');
+        return;
+    }
+    
+    showLoading('Analyse de l\'historique en cours...');
+    
+    try {
+        const response = await fetch('/api/revenue/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                commercial_code: commercial,
+                min_revenue: parseFloat(document.getElementById('minRevenueTarget').value) || 0
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            displayHistoricalAnalysis(data);
+        } else {
+            alert('Erreur: ' + (data.error || 'Impossible d\'analyser l\'historique'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Une erreur est survenue lors de l\'analyse');
+    } finally {
+        hideLoading();
+    }
+});
+
+document.getElementById('optimizeDeliveryBtn').addEventListener('click', function() {
+    // Redirect to delivery optimization with pre-filled commercial
+    const url = `/delivery_optimization?commercial=${currentCommercial}&min_revenue=${document.getElementById('minRevenueTarget').value}`;
+    window.location.href = url;
+});
+
+document.getElementById('viewPredictionMapBtn').addEventListener('click', function() {
+    showPredictionMap();
+});
+
+document.getElementById('adjustTargetsBtn').addEventListener('click', function() {
+    // Allow user to adjust targets based on predictions
+    const currentTarget = document.getElementById('minRevenueTarget').value;
+    const avgRevenue = currentPredictionData?.prediction_results?.average_daily_revenue || 0;
+    
+    const newTarget = prompt(
+        `Objectif actuel: ${currentTarget} TND\n` +
+        `Revenu moyen prédit: ${avgRevenue.toFixed(2)} TND\n\n` +
+        `Nouvel objectif minimum (TND):`,
+        Math.max(currentTarget, avgRevenue * 0.9).toFixed(0)
+    );
+    
+    if (newTarget && !isNaN(newTarget)) {
+        document.getElementById('minRevenueTarget').value = newTarget;
+        alert('Objectif mis à jour. Cliquez sur "Générer les Prédictions" pour recalculer.');
+    }
+});
+
+function displayPredictionResults(data) {
+    const results = data.prediction_results;
+    const container = document.getElementById('revenuePredictionResults');
+    
+    let html = `
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-white">${results.average_daily_revenue.toFixed(2)} TND</h5>
+                        <p class="card-text">Revenus Quotidiens Moyens</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-success">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success">${results.total_estimated_revenue.toFixed(2)} TND</h5>
+                        <p class="card-text">Total Prévu (${data.forecast_days} jours)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card ${results.meets_revenue_constraint ? 'border-success' : 'border-warning'}">
+                    <div class="card-body text-center">
+                        <h5 class="card-title ${results.meets_revenue_constraint ? 'text-success' : 'text-warning'}">
+                            ${results.meets_revenue_constraint ? '✅ Atteint' : '⚠️ Non Atteint'}
+                        </h5>
+                        <p class="card-text">Objectif de ${data.min_revenue_target} TND</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-info">${results.quality_score.toFixed(1)}/100</h5>
+                        <p class="card-text">Score de Qualité</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (!results.meets_revenue_constraint && results.revenue_shortfall > 0) {
+        html += `
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Attention - Objectif Non Atteint</h6>
+                <p class="mb-2">Manque estimé: <strong>${results.revenue_shortfall.toFixed(2)} TND</strong></p>
+                <p class="mb-0">Consultez les recommandations ci-dessous pour améliorer vos performances.</p>
+            </div>
+        `;
+    }
+    
+    if (results.recommendations && results.recommendations.length > 0) {
+        html += `
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommandations Personnalisées</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+        `;
+        
+        results.recommendations.slice(0, 5).forEach(rec => {
+            html += `<li class="list-group-item border-0 px-0">${rec}</li>`;
+        });
+        
+        html += `
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+    document.getElementById('resultsSection').style.display = 'block';
+    
+    // Update quick stats
+    updateQuickStats(results);
+}
+
+function updateQuickStats(results) {
+    const container = document.getElementById('quickStats');
+    const dailyAvg = results.average_daily_revenue;
+    const target = parseFloat(document.getElementById('minRevenueTarget').value) || 0;
+    const performance = target > 0 ? (dailyAvg / target * 100) : 100;
+    
+    container.innerHTML = `
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="bg-light p-2 rounded text-center">
+                    <small class="text-white">Performance</small>
+                    <div class="h5 mb-0 ${performance >= 100 ? 'text-success' : 'text-warning'}">${performance.toFixed(1)}%</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="bg-light p-2 rounded text-center">
+                    <small class="text-white">Qualité</small>
+                    <div class="h5 mb-0 text-info">${results.quality_score.toFixed(0)}/100</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function displayHistoricalAnalysis(data) {
+    const stats = data.revenue_statistics;
+    const modal = new bootstrap.Modal(document.getElementById('historicalAnalysisModal'));
+    const container = document.getElementById('historicalAnalysisContent');
+    
+    let html = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6>Période d'Analyse</h6>
+                <p>${stats.days_analyzed} jours analysés</p>
+                
+                <h6>Revenus Quotidiens</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Moyenne:</strong> ${stats.average_daily_revenue.toFixed(2)} TND</li>
+                    <li><strong>Médiane:</strong> ${stats.median_daily_revenue.toFixed(2)} TND</li>
+                    <li><strong>Maximum:</strong> ${stats.max_daily_revenue.toFixed(2)} TND</li>
+                    <li><strong>Minimum:</strong> ${stats.min_daily_revenue.toFixed(2)} TND</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Performance Globale</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Total:</strong> ${stats.total_revenue.toFixed(2)} TND</li>
+                    <li><strong>Écart-type:</strong> ${stats.revenue_std.toFixed(2)} TND</li>
+                </ul>
+    `;
+    
+    if (stats.min_revenue_target) {
+        html += `
+                <h6>Conformité aux Objectifs</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Objectif:</strong> ${stats.min_revenue_target} TND / jour</li>
+                    <li><strong>Taux de conformité:</strong> ${stats.compliance_rate.toFixed(1)}%</li>
+                    <li><strong>Jours sous l'objectif:</strong> ${stats.days_below_target}</li>
+                    ${stats.target_gap > 0 ? `<li><strong>Écart moyen:</strong> ${stats.target_gap.toFixed(2)} TND</li>` : ''}
+                </ul>
+        `;
+    }
+    
+    html += `
+            </div>
+        </div>
+    `;
+    
+    if (data.recommendations && data.recommendations.length > 0) {
+        html += `
+            <div class="alert alert-info">
+                <h6>Recommandations basées sur l'analyse:</h6>
+                <ul class="mb-0">
+        `;
+        data.recommendations.forEach(rec => {
+            html += `<li>${rec}</li>`;
+        });
+        html += `
+                </ul>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+    modal.show();
+}
+
+function enableQuickActions() {
+    document.getElementById('optimizeDeliveryBtn').disabled = false;
+    document.getElementById('viewPredictionMapBtn').disabled = false;
+    document.getElementById('adjustTargetsBtn').disabled = false;
+}
+
+function showPredictionMap() {
+    // Show the map container
+    document.getElementById('predictionMap').style.display = 'block';
+    document.getElementById('mapPlaceholder').style.display = 'none';
+    
+    // Initialize map if not already done
+    if (!predictionMap) {
+        predictionMap = L.map('predictionMap').setView([36.8065, 10.1815], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(predictionMap);
+    }
+    
+    // Clear existing markers
+    predictionMap.eachLayer(function(layer) {
+        if (layer instanceof L.Marker) {
+            predictionMap.removeLayer(layer);
+        }
+    });
+    
+    // Add delivery prediction points based on current data
+    if (currentPredictionData && currentPredictionData.prediction_results) {
+        const results = currentPredictionData.prediction_results;
+        
+        // Create sample delivery points for demonstration
+        const deliveryPoints = [
+            {lat: 36.8065, lng: 10.1815, name: "Zone Centre", revenue: results.average_daily_revenue * 0.3},
+            {lat: 36.8500, lng: 10.2000, name: "Zone Nord", revenue: results.average_daily_revenue * 0.25},
+            {lat: 36.7500, lng: 10.1500, name: "Zone Sud", revenue: results.average_daily_revenue * 0.25},
+            {lat: 36.8200, lng: 10.0500, name: "Zone Ouest", revenue: results.average_daily_revenue * 0.2}
+        ];
+        
+        // Add markers for each delivery point
+        deliveryPoints.forEach((point, index) => {
+            const markerColor = point.revenue > results.average_daily_revenue * 0.25 ? 'green' : 
+                               point.revenue > results.average_daily_revenue * 0.15 ? 'orange' : 'red';
+            
+            const marker = L.marker([point.lat, point.lng]).addTo(predictionMap);
+            
+            marker.bindPopup(`
+                <div class="text-center">
+                    <h6>${point.name}</h6>
+                    <p><strong>Revenus prévus:</strong> ${point.revenue.toFixed(2)} TND</p>
+                    <p><strong>Performance:</strong> ${((point.revenue / results.average_daily_revenue) * 100).toFixed(1)}%</p>
+                    <small>Prédictions basées sur l'historique SARIMA</small>
+                </div>
+            `);
+        });
+        
+        // Add connecting lines to show optimized route
+        const routeCoordinates = deliveryPoints.map(point => [point.lat, point.lng]);
+        const polyline = L.polyline(routeCoordinates, {
+            color: '#3498db',
+            weight: 3,
+            opacity: 0.7,
+            dashArray: '10, 10'
+        }).addTo(predictionMap);
+        
+        // Fit map to show all points
+        const group = new L.featureGroup(predictionMap._layers);
+        if (Object.keys(group._layers).length > 0) {
+            predictionMap.fitBounds(group.getBounds().pad(0.1));
+        }
+        
+        // Add legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML = `
+                <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                    <h6><i class="fas fa-map me-2"></i>Légende</h6>
+                    <p><span style="color: green;">●</span> Zone à forte performance</p>
+                    <p><span style="color: orange;">●</span> Zone à performance moyenne</p>
+                    <p><span style="color: red;">●</span> Zone à faible performance</p>
+                    <p><span style="color: #3498db;">---</span> Route optimisée suggérée</p>
+                </div>
+            `;
+            return div;
+        };
+        legend.addTo(predictionMap);
+    } else {
+        // Show default placeholder
+        L.popup()
+            .setLatLng([36.8065, 10.1815])
+            .setContent(`
+                <div class="text-center">
+                    <h6>Carte des Prédictions</h6>
+                    <p>Commercial: ${currentCommercial}</p>
+                    <p>Générez des prédictions pour voir les zones de livraison optimisées</p>
+                    <small>Intégration complète avec les données de livraison en cours...</small>
+                </div>
+            `)
+            .openOn(predictionMap);
+    }
+}
+
+function showLoading(message) {
+    // Simple loading implementation - you can enhance this
+    if (!document.getElementById('loadingModal')) {
+        const modalHtml = `
+            <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+                <div class="modal-dialog modal-sm modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body text-center">
+                            <div class="spinner-border text-white" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3 mb-0" id="loadingMessage">${message}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    document.getElementById('loadingMessage').textContent = message;
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+}
+
+function hideLoading() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+
+// Auto-fill commercial from URL parameters if present
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const commercial = urlParams.get('commercial');
+    const minRevenue = urlParams.get('min_revenue');
+    
+    if (commercial) {
+        document.getElementById('commercial').value = commercial;
+    }
+    if (minRevenue) {
+        document.getElementById('minRevenueTarget').value = minRevenue;
+    }
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.btn {
+    transition: all 0.2s;
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+#predictionMap {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+</style>
+{% endblock %}
